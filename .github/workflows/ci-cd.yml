@@ -46,7 +46,7 @@ jobs:
       - name: Log in to Render
         run: |
           echo "RENDER_API_KEY=${{ secrets.RENDER_API_KEY }}" > ~/.render-api-key
-          curl -sL https://render.com/docs/cli/install | bash
+          curl -sL https://render.com/docs/cli/install.sh | bash
           render login --api-key $(cat ~/.render-api-key)
 
       - name: Deploy to Render
