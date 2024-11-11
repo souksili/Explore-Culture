@@ -6,15 +6,15 @@ services:
       - "5000:5000"
     environment:
       - FLASK_ENV=production
-      - DATABASE_URL=${{ secrets.DATABASE_URL }}
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       - db
 
   db:
     image: postgres:13
     environment:
-      - POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-      - POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-      - POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5432:5432"
