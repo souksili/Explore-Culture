@@ -12,9 +12,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      STATUS: "✅ CI/CD Pipeline completed successfully for Flask Backend\n"
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -31,8 +28,6 @@ jobs:
           pip install -r requirements.txt
           pip install pytest flake8 black
         continue-on-error: true
-        env:
-          STATUS: "${{ env.STATUS }}\nInstall dependencies: ${{ steps.install_dependencies.outcome }}"
 
       - name: Run unit tests
         id: run_tests
@@ -40,8 +35,6 @@ jobs:
           pytest --maxfail=1 --disable-warnings -v > test_output.txt
           cat test_output.txt
         continue-on-error: true
-        env:
-          STATUS: "${{ env.STATUS }}\nRun unit tests: ${{ steps.run_tests.outcome }}"
 
       - name: Lint with flake8
         id: lint_flake8
@@ -49,16 +42,12 @@ jobs:
           flake8 . --max-line-length=120 > lint_output.txt
           cat lint_output.txt
         continue-on-error: true
-        env:
-          STATUS: "${{ env.STATUS }}\nLint with flake8: ${{ steps.lint_flake8.outcome }}"
 
       - name: Format code with black
         id: format_black
         run: |
           black . --check
         continue-on-error: true
-        env:
-          STATUS: "${{ env.STATUS }}\nFormat code with black: ${{ steps.format_black.outcome }}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -75,8 +64,6 @@ jobs:
         id: build_docker
         run: docker build -t flask-backend:$GITHUB_SHA .
         continue-on-error: true
-        env:
-          STATUS: "${{ env.STATUS }}\nBuild Docker image: ${{ steps.build_docker.outcome }}"
 
       - name: Run Flask application in Docker
         id: run_flask
@@ -85,8 +72,6 @@ jobs:
           sleep 5
           curl http://localhost:5000/api
         continue-on-error: true
-        env:
-          STATUS: "${{ env.STATUS }}\nRun Flask application in Docker: ${{ steps.run_flask.outcome }}"
 
       - name: Push Docker image to DockerHub
         if: github.ref == 'refs/heads/main'
@@ -96,20 +81,30 @@ jobs:
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
         continue-on-error: true
-        env:
-          STATUS: "${{ env.STATUS }}\nPush Docker image to DockerHub: ${{ steps.push_docker.outcome }}"
 
       - name: Deploy to Render using Deploy Hook
         id: deploy_render
         run: |
           curl -X POST "https://api.render.com/deploy/srv-csone2aj1k6c73ako43g?key=${{ secrets.RENDER_DEPLOY_KEY }}"
         continue-on-error: true
-        env:
-          STATUS: "${{ env.STATUS }}\nDeploy to Render: ${{ steps.deploy_render.outcome }}"
+
+      - name: Gather status for Discord Notification
+        id: gather_status
+        run: |
+          STATUS="✅ CI/CD Pipeline completed for Flask Backend\n\n"
+          STATUS+="Install dependencies: ${{ steps.install_dependencies.outcome }}\n"
+          STATUS+="Run unit tests: ${{ steps.run_tests.outcome }}\n"
+          STATUS+="Lint with flake8: ${{ steps.lint_flake8.outcome }}\n"
+          STATUS+="Format code with black: ${{ steps.format_black.outcome }}\n"
+          STATUS+="Build Docker image: ${{ steps.build_docker.outcome }}\n"
+          STATUS+="Run Flask application in Docker: ${{ steps.run_flask.outcome }}\n"
+          STATUS+="Push Docker image to DockerHub: ${{ steps.push_docker.outcome }}\n"
+          STATUS+="Deploy to Render: ${{ steps.deploy_render.outcome }}\n"
+          echo "$STATUS" > status.txt
 
       - name: Send Discord Notification
         run: |
-          payload=$(jq -n --arg content "$STATUS" '{content: $content}')
+          payload=$(jq -n --arg content "$(cat status.txt)" '{content: $content}')
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "$payload" \
