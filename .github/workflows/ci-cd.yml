@@ -30,7 +30,7 @@ jobs:
         continue-on-error: true
 
       - name: Start services with Docker Compose
-        run: docker-compose -f docker-compose.yml up -d
+        run: docker compose -f docker-compose.yml up -d
 
       - name: Run Backend unit tests
         id: run_tests
