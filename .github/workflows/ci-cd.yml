@@ -20,7 +20,6 @@ jobs:
           COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
           COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
           BRANCH_NAME="${{ github.ref }}"
-          echo "💻 Code checked out successfully at $CURRENT_TIME\nCommit message: \"$COMMIT_MESSAGE\"\nCommit by: $COMMIT_AUTHOR\nBranch: $BRANCH_NAME"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n💻 Code checked out successfully\"}" \
@@ -32,13 +31,9 @@ jobs:
           python-version: '3.9'
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
-          echo "🐍 Python environment set up successfully at $CURRENT_TIME"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n🐍 Python environment set up successfully\"}" \
+               -d "{\"content\": \"🐍 Python environment set up successfully at $CURRENT_TIME\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Install dependencies
@@ -49,27 +44,21 @@ jobs:
           pip install pytest flake8 black
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n📦 Dependencies installed successfully 🧑‍💻\"}" \
+               -d "{\"content\": \"📦 Dependencies installed successfully at $CURRENT_TIME 🧑‍💻\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Format code with black
         id: format_black
         run: |
-          black .
+          black .  # Format the code
         continue-on-error: true
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n🎨 Code formatted with Black\"}" \
+               -d "{\"content\": \"🎨 Code formatted with Black at $CURRENT_TIME\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Lint with flake8
@@ -79,24 +68,18 @@ jobs:
         continue-on-error: true
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n🔍 Code linted with Flake8\"}" \
+               -d "{\"content\": \"🔍 Code linted with Flake8 at $CURRENT_TIME\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n🐳 Docker Buildx set up\"}" \
+               -d "{\"content\": \"🐳 Docker Buildx set up at $CURRENT_TIME\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Cache Docker layers
@@ -108,12 +91,9 @@ jobs:
             ${{ runner.os }}-buildx-
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n💾 Docker layers cached\"}" \
+               -d "{\"content\": \"💾 Docker layers cached at $CURRENT_TIME\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Build Docker image
@@ -121,19 +101,16 @@ jobs:
         run: docker build -t flask-backend:$GITHUB_SHA .
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n🛠 Docker image built\"}" \
+               -d "{\"content\": \"🛠 Docker image built at $CURRENT_TIME\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Run Flask application in Docker
         id: run_flask
         run: |
           docker compose -f docker-compose.yml up -d
-          sleep 5  # Attendre que l'application démarre
+          sleep 5  # Wait for the application to start
           curl http://localhost:5000/api
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -142,12 +119,9 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n🚀 Flask application running in Docker\"}" \
+               -d "{\"content\": \"🚀 Flask application running in Docker at $CURRENT_TIME\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Run unit tests inside Docker container
@@ -162,12 +136,9 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n🧪 Unit tests executed\"}" \
+               -d "{\"content\": \"🧪 Unit tests executed at $CURRENT_TIME\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Push Docker image to DockerHub
@@ -179,12 +150,9 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n📤 Docker image pushed to DockerHub\"}" \
+               -d "{\"content\": \"📤 Docker image pushed to DockerHub at $CURRENT_TIME\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Deploy to Render using Deploy Hook
@@ -193,12 +161,9 @@ jobs:
           curl -X POST "https://api.render.com/deploy/srv-csone2aj1k6c73ako43g?key=${{ secrets.RENDER_DEPLOY_KEY }}"
       - run: |
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
-          BRANCH_NAME="${{ github.ref }}"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📅 $CURRENT_TIME\nBranch: $BRANCH_NAME\nCommit by: $COMMIT_AUTHOR\nCommit message: \"$COMMIT_MESSAGE\"\n🚀 Deployment to Render triggered\"}" \
+               -d "{\"content\": \"🚀 Deployment to Render triggered at $CURRENT_TIME\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Send Final Status Notification
