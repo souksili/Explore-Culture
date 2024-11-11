@@ -61,7 +61,7 @@ jobs:
       - name: Run Flask application in Docker
         id: run_flask
         run: |
-          docker-compose -f docker-compose.yml up -d
+          docker compose -f docker-compose.yml up -d
           sleep 5  # Attendre que l'application démarre
           curl http://localhost:5000/api
         env:
@@ -74,9 +74,15 @@ jobs:
       - name: Run Backend unit tests
         id: run_tests
         run: |
-          sleep 10
-          docker exec $(docker ps -q -f ancestor=flask-backend:$GITHUB_SHA) pytest --maxfail=1 --disable-warnings -v > test_output.txt
-          cat test_output.txt
+          sleep 10  # Wait for the application to fully start
+          CONTAINER_ID=$(docker ps -q -f ancestor=flask-backend:$GITHUB_SHA)
+          if [ -n "$CONTAINER_ID" ]; then
+            docker exec $CONTAINER_ID pytest --maxfail=1 --disable-warnings -v > test_output.txt
+            cat test_output.txt
+          else
+            echo "No running container found"
+            exit 1
+          fi
         continue-on-error: true
 
       - name: Push Docker image to DockerHub
