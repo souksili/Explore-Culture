@@ -61,16 +61,16 @@ jobs:
       - name: Run Flask application in Docker
         id: run_flask
         run: |
-          docker run -d -p 5000:5000 -e DATABASE_URL=${{ secrets.DATABASE_URL }} flask-backend:$GITHUB_SHA
-          sleep 5
+          docker-compose -f docker-compose.yml up -d
+          sleep 5  # Attendre que l'application démarre
           curl http://localhost:5000/api
         continue-on-error: true
-      
+
       - name: Run Backend unit tests
         id: run_tests
         run: |
-          sleep 10
-          docker exec $(docker ps -q -f ancestor=flask-backend:$GITHUB_SHA) pytest --maxfail=1 --disable-warnings -v > test_output.txt
+          sleep 10  # Attendre que l'application soit pleinement lancée
+          docker-compose -f docker-compose.yml exec web pytest --maxfail=1 --disable-warnings -v > test_output.txt
           cat test_output.txt
         continue-on-error: true
 
