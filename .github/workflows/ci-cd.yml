@@ -36,19 +36,13 @@ jobs:
           sleep 5
           curl http://localhost:5000/api
 
-      - name: Push Docker image to DockerHub (optionnel)
+      - name: Push Docker image to DockerHub (optional)
         if: github.ref == 'refs/heads/main'
         run: |
           docker tag flask-backend ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
 
-      - name: Log in to Render
+      - name: Deploy to Render using Deploy Hook
         run: |
-          echo "RENDER_API_KEY=${{ secrets.RENDER_API_KEY }}" > ~/.render-api-key
-          curl -sL https://render.com/docs/cli/install.sh | bash
-          render login --api-key $(cat ~/.render-api-key)
-
-      - name: Deploy to Render
-        run: |
-          render deploy --service flask-backend --docker --branch main
+          curl -X POST "https://api.render.com/deploy/srv-csone2aj1k6c73ako43g?key=${{ secrets.RENDER_DEPLOY_KEY }}"
