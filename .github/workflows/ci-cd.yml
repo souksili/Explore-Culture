@@ -73,6 +73,11 @@ jobs:
         run: |
           sleep 10
           docker compose -f ./docker-compose.yml exec web python test
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
 
       - name: Push Docker image to DockerHub
         if: github.ref == 'refs/heads/main'
