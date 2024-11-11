@@ -15,8 +15,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        run: |
-          echo "💻 Checking out the code"
+      - run: |
+          echo "💻 Code checked out successfully!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "💻 Code checked out successfully!"}' \
@@ -26,8 +26,8 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
-        run: |
-          echo "🐍 Setting up Python environment"
+      - run: |
+          echo "🐍 Python environment set up successfully!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "🐍 Python environment set up successfully!"}' \
@@ -39,8 +39,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest flake8 black
-        run: |
-          echo "📦 Installing dependencies"
+      - run: |
+          echo "📦 Dependencies installed successfully!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "📦 Dependencies installed successfully! 🧑‍💻"}' \
@@ -51,8 +51,8 @@ jobs:
         run: |
           black .
         continue-on-error: true
-        run: |
-          echo "🎨 Formatting code with black"
+      - run: |
+          echo "🎨 Code formatted with Black!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "🎨 Code formatted with Black!"}' \
@@ -63,8 +63,8 @@ jobs:
         run: |
           flake8 . --max-line-length=120
         continue-on-error: true
-        run: |
-          echo "🔍 Linting with flake8"
+      - run: |
+          echo "🔍 Code linted with Flake8!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "🔍 Code linted with Flake8!"}' \
@@ -72,8 +72,8 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-        run: |
-          echo "🐳 Setting up Docker Buildx"
+      - run: |
+          echo "🐳 Docker Buildx set up!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "🐳 Docker Buildx set up!"}' \
@@ -86,8 +86,8 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-        run: |
-          echo "💾 Caching Docker layers"
+      - run: |
+          echo "💾 Docker layers cached successfully!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "💾 Docker layers cached successfully!"}' \
@@ -96,8 +96,8 @@ jobs:
       - name: Build Docker image
         id: build_docker
         run: docker build -t flask-backend:$GITHUB_SHA .
-        run: |
-          echo "🛠 Building Docker image"
+      - run: |
+          echo "🛠 Docker image built successfully!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "🛠 Docker image built successfully!"}' \
@@ -114,8 +114,8 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-        run: |
-          echo "🚀 Running Flask application in Docker"
+      - run: |
+          echo "🚀 Flask application running in Docker!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "🚀 Flask application running in Docker!"}' \
@@ -131,8 +131,8 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-        run: |
-          echo "🧪 Running unit tests"
+      - run: |
+          echo "🧪 Unit tests executed!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "🧪 Unit tests executed!"}' \
@@ -145,8 +145,8 @@ jobs:
           docker tag flask-backend:$GITHUB_SHA ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
-        run: |
-          echo "📤 Pushing Docker image to DockerHub"
+      - run: |
+          echo "📤 Docker image pushed to DockerHub!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "📤 Docker image pushed to DockerHub!"}' \
@@ -156,8 +156,8 @@ jobs:
         id: deploy_render
         run: |
           curl -X POST "https://api.render.com/deploy/srv-csone2aj1k6c73ako43g?key=${{ secrets.RENDER_DEPLOY_KEY }}"
-        run: |
-          echo "🚀 Deploying to Render"
+      - run: |
+          echo "🚀 Deployment to Render triggered!"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d '{"content": "🚀 Deployment to Render triggered!"}' \
