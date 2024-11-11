@@ -32,11 +32,11 @@ jobs:
 
       - name: Run Flask application in Docker
         run: |
-          docker run -d -p 5000:5000 flask-backend
+          docker run -d -p 5000:5000 -e DATABASE_URL=${{ secrets.DATABASE_URL }} flask-backend
           sleep 5
           curl http://localhost:5000/api
 
-      - name: Push Docker image to DockerHub (optional)
+      - name: Push Docker image to DockerHub
         if: github.ref == 'refs/heads/main'
         run: |
           docker tag flask-backend ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
