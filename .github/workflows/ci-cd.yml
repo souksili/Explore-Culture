@@ -32,7 +32,7 @@ jobs:
       - name: Run unit tests
         id: run_tests
         run: |
-          pytest --maxfail=1 --disable-warnings -v > test_output.txt
+          pytest --maxfail=1 --disable-warnings -v -s --tb=short > test_output.txt
           cat test_output.txt
         continue-on-error: true
 
