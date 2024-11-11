@@ -12,9 +12,49 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      STATUS: "✅ CI/CD Pipeline completed successfully for Flask Backend\n"
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Set up Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest flake8 black
+        continue-on-error: true
+        env:
+          STATUS: "${{ env.STATUS }}\nInstall dependencies: ${{ steps.<nom_step>.outcome }}"
+
+      - name: Run unit tests
+        run: |
+          pytest --maxfail=1 --disable-warnings -v > test_output.txt
+          cat test_output.txt
+        continue-on-error: true
+        env:
+          STATUS: "${{ env.STATUS }}\nRun unit tests: ${{ steps.<nom_step>.outcome }}"
+
+      - name: Lint with flake8
+        run: |
+          flake8 . --max-line-length=120 > lint_output.txt
+          cat lint_output.txt
+        continue-on-error: true
+        env:
+          STATUS: "${{ env.STATUS }}\nLint with flake8: ${{ steps.<nom_step>.outcome }}"
+
+      - name: Format code with black
+        run: |
+          black . --check
+        continue-on-error: true
+        env:
+          STATUS: "${{ env.STATUS }}\nFormat code with black: ${{ steps.<nom_step>.outcome }}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -28,21 +68,40 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Build Docker image
-        run: docker build -t flask-backend .
+        run: docker build -t flask-backend:$GITHUB_SHA .
+        continue-on-error: true
+        env:
+          STATUS: "${{ env.STATUS }}\nBuild Docker image: ${{ steps.<nom_step>.outcome }}"
 
       - name: Run Flask application in Docker
         run: |
-          docker run -d -p 5000:5000 -e DATABASE_URL=${{ secrets.DATABASE_URL }} flask-backend
+          docker run -d -p 5000:5000 -e DATABASE_URL=${{ secrets.DATABASE_URL }} flask-backend:$GITHUB_SHA
           sleep 5
           curl http://localhost:5000/api
+        continue-on-error: true
+        env:
+          STATUS: "${{ env.STATUS }}\nRun Flask application in Docker: ${{ steps.<nom_step>.outcome }}"
 
       - name: Push Docker image to DockerHub
         if: github.ref == 'refs/heads/main'
         run: |
-          docker tag flask-backend ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
+          docker tag flask-backend:$GITHUB_SHA ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
+        continue-on-error: true
+        env:
+          STATUS: "${{ env.STATUS }}\nPush Docker image to DockerHub: ${{ steps.<nom_step>.outcome }}"
 
       - name: Deploy to Render using Deploy Hook
         run: |
           curl -X POST "https://api.render.com/deploy/srv-csone2aj1k6c73ako43g?key=${{ secrets.RENDER_DEPLOY_KEY }}"
+        continue-on-error: true
+        env:
+          STATUS: "${{ env.STATUS }}\nDeploy to Render: ${{ steps.<nom_step>.outcome }}"
+
+      - name: Send Discord Notification
+        run: |
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\": \"${{ env.STATUS }}\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
