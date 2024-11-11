@@ -1,0 +1,54 @@
+name: CI/CD Pipeline for Flask Backend
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build Docker image
+        run: docker build -t flask-backend .
+
+      - name: Run Flask application in Docker
+        run: |
+          docker run -d -p 5000:5000 flask-backend
+          sleep 5
+          curl http://localhost:5000/api
+
+      - name: Push Docker image to DockerHub (optionnel)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker tag flask-backend myusername/flask-backend:latest
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker push myusername/flask-backend:latest
+
+      - name: Log in to Render
+        run: |
+          echo "RENDER_API_KEY=${{ secrets.RENDER_API_KEY }}" > ~/.render-api-key
+          curl -sL https://render.com/docs/cli/install | bash
+          render login --api-key $(cat ~/.render-api-key)
+
+      - name: Deploy to Render
+        run: |
+          render deploy --service flask-backend --docker --branch main
