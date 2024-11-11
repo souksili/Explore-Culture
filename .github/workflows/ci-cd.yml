@@ -39,9 +39,9 @@ jobs:
       - name: Push Docker image to DockerHub (optionnel)
         if: github.ref == 'refs/heads/main'
         run: |
-          docker tag flask-backend myusername/flask-backend:latest
-          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-          docker push myusername/flask-backend:latest
+          docker tag flask-backend ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
 
       - name: Log in to Render
         run: |
