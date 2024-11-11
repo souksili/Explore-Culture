@@ -71,18 +71,13 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         continue-on-error: true
 
-      - name: Run Backend unit tests
+      - name: Run unit tests inside Docker container
         id: run_tests
         run: |
-          sleep 10  # Wait for the application to fully start
-          CONTAINER_ID=$(docker ps -q -f ancestor=flask-backend:$GITHUB_SHA)
-          if [ -n "$CONTAINER_ID" ]; then
-            docker exec $CONTAINER_ID pytest --maxfail=1 --disable-warnings -v > test_output.txt
-            cat test_output.txt
-          else
-            echo "No running container found"
-            exit 1
-          fi
+          # Trouver le nom du conteneur Flask en cours d'exécution
+          CONTAINER_ID=$(docker ps -q --filter "ancestor=flask-backend:$GITHUB_SHA")
+          # Exécuter les tests dans le conteneur Flask
+          docker exec $CONTAINER_ID pytest --maxfail=1 --disable-warnings -q
         continue-on-error: true
 
       - name: Push Docker image to DockerHub
