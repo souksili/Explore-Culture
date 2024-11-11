@@ -15,11 +15,23 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        run: |
+          echo "💻 Checking out the code"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "💻 Code checked out successfully!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Set up Python environment
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
+        run: |
+          echo "🐍 Setting up Python environment"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "🐍 Python environment set up successfully!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Install dependencies
         id: install_dependencies
@@ -27,21 +39,45 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest flake8 black
-      
+        run: |
+          echo "📦 Installing dependencies"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "📦 Dependencies installed successfully! 🧑‍💻"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
+
       - name: Format code with black
         id: format_black
         run: |
           black .
         continue-on-error: true
+        run: |
+          echo "🎨 Formatting code with black"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "🎨 Code formatted with Black!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Lint with flake8
         id: lint_flake8
         run: |
           flake8 . --max-line-length=120
         continue-on-error: true
+        run: |
+          echo "🔍 Linting with flake8"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "🔍 Code linted with Flake8!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        run: |
+          echo "🐳 Setting up Docker Buildx"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "🐳 Docker Buildx set up!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Cache Docker layers
         uses: actions/cache@v2
@@ -50,10 +86,22 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
+        run: |
+          echo "💾 Caching Docker layers"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "💾 Docker layers cached successfully!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Build Docker image
         id: build_docker
         run: docker build -t flask-backend:$GITHUB_SHA .
+        run: |
+          echo "🛠 Building Docker image"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "🛠 Docker image built successfully!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Run Flask application in Docker
         id: run_flask
@@ -66,6 +114,12 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+        run: |
+          echo "🚀 Running Flask application in Docker"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "🚀 Flask application running in Docker!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Run unit tests inside Docker container
         id: run_tests
@@ -77,6 +131,12 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+        run: |
+          echo "🧪 Running unit tests"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "🧪 Unit tests executed!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Push Docker image to DockerHub
         if: github.ref == 'refs/heads/main'
@@ -85,30 +145,27 @@ jobs:
           docker tag flask-backend:$GITHUB_SHA ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
+        run: |
+          echo "📤 Pushing Docker image to DockerHub"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "📤 Docker image pushed to DockerHub!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Deploy to Render using Deploy Hook
         id: deploy_render
         run: |
           curl -X POST "https://api.render.com/deploy/srv-csone2aj1k6c73ako43g?key=${{ secrets.RENDER_DEPLOY_KEY }}"
-
-      - name: Gather status for Discord Notification
-        id: gather_status
         run: |
-          STATUS="✅ CI/CD Pipeline completed for Flask Backend\n\n"
-          STATUS+="Install dependencies: ${{ steps.install_dependencies.outcome }}\n"
-          STATUS+="Run unit tests: ${{ steps.run_tests.outcome }}\n"
-          STATUS+="Lint with flake8: ${{ steps.lint_flake8.outcome }}\n"
-          STATUS+="Format code with black: ${{ steps.format_black.outcome }}\n"
-          STATUS+="Build Docker image: ${{ steps.build_docker.outcome }}\n"
-          STATUS+="Run Flask application in Docker: ${{ steps.run_flask.outcome }}\n"
-          STATUS+="Push Docker image to DockerHub: ${{ steps.push_docker.outcome }}\n"
-          STATUS+="Deploy to Render: ${{ steps.deploy_render.outcome }}\n"
-          echo "$STATUS" > status.txt
-
-      - name: Send Discord Notification
-        run: |
-          payload=$(jq -n --arg content "$(cat status.txt)" '{content: $content}')
+          echo "🚀 Deploying to Render"
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "$payload" \
+               -d '{"content": "🚀 Deployment to Render triggered!"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Send Final Status Notification
+        run: |
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"content": "✅ CI/CD Pipeline completed successfully! Great job team! 💕"}' \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
