@@ -27,7 +27,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest flake8 black
-        continue-on-error: true
 
       - name: Lint with flake8
         id: lint_flake8
@@ -56,7 +55,6 @@ jobs:
       - name: Build Docker image
         id: build_docker
         run: docker build -t flask-backend:$GITHUB_SHA .
-        continue-on-error: true
 
       - name: Run Flask application in Docker
         id: run_flask
@@ -69,16 +67,12 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-        continue-on-error: true
 
       - name: Run unit tests inside Docker container
         id: run_tests
         run: |
-          # Trouver le nom du conteneur Flask en cours d'exécution
-          CONTAINER_ID=$(docker ps -q --filter "ancestor=flask-backend:$GITHUB_SHA")
-          # Exécuter les tests dans le conteneur Flask
-          docker exec $CONTAINER_ID pytest --maxfail=1 --disable-warnings -q
-        continue-on-error: true
+          sleep 10
+          docker compose -f ./docker-compose.yml exec web python test
 
       - name: Push Docker image to DockerHub
         if: github.ref == 'refs/heads/main'
@@ -87,13 +81,11 @@ jobs:
           docker tag flask-backend:$GITHUB_SHA ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
-        continue-on-error: true
 
       - name: Deploy to Render using Deploy Hook
         id: deploy_render
         run: |
           curl -X POST "https://api.render.com/deploy/srv-csone2aj1k6c73ako43g?key=${{ secrets.RENDER_DEPLOY_KEY }}"
-        continue-on-error: true
 
       - name: Gather status for Discord Notification
         id: gather_status
