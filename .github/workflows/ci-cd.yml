@@ -43,10 +43,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest flake8 black
       - run: |
-          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📦 Dependencies installed successfully at $CURRENT_TIME 🧑‍💻\"}" \
+               -d "{\"content\": \"📦 Dependencies installed successfully 🧑‍💻\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Format code with black
@@ -55,10 +54,9 @@ jobs:
           black .  # Format the code
         continue-on-error: true
       - run: |
-          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"🎨 Code formatted with Black at $CURRENT_TIME\"}" \
+               -d "{\"content\": \"🎨 Code formatted with Black\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Lint with flake8
@@ -67,19 +65,17 @@ jobs:
           flake8 . --max-line-length=120
         continue-on-error: true
       - run: |
-          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"🔍 Code linted with Flake8 at $CURRENT_TIME\"}" \
+               -d "{\"content\": \"🔍 Code linted with Flake8\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - run: |
-          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"🐳 Docker Buildx set up at $CURRENT_TIME\"}" \
+               -d "{\"content\": \"🐳 Docker Buildx set up\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Cache Docker layers
@@ -90,20 +86,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
       - run: |
-          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"💾 Docker layers cached at $CURRENT_TIME\"}" \
+               -d "{\"content\": \"💾 Docker layers cached\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Build Docker image
         id: build_docker
         run: docker build -t flask-backend:$GITHUB_SHA .
       - run: |
-          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"🛠 Docker image built at $CURRENT_TIME\"}" \
+               -d "{\"content\": \"🛠 Docker image built\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Run Flask application in Docker
@@ -118,10 +112,9 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
       - run: |
-          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"🚀 Flask application running in Docker at $CURRENT_TIME\"}" \
+               -d "{\"content\": \"🚀 Flask application running in Docker\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Run unit tests inside Docker container
@@ -135,10 +128,9 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
       - run: |
-          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"🧪 Unit tests executed at $CURRENT_TIME\"}" \
+               -d "{\"content\": \"🧪 Unit tests executed\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Push Docker image to DockerHub
@@ -149,10 +141,9 @@ jobs:
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:$GITHUB_SHA
       - run: |
-          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"📤 Docker image pushed to DockerHub at $CURRENT_TIME\"}" \
+               -d "{\"content\": \"📤 Docker image pushed to DockerHub\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Deploy to Render using Deploy Hook
@@ -160,10 +151,9 @@ jobs:
         run: |
           curl -X POST "https://api.render.com/deploy/srv-csone2aj1k6c73ako43g?key=${{ secrets.RENDER_DEPLOY_KEY }}"
       - run: |
-          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"🚀 Deployment to Render triggered at $CURRENT_TIME\"}" \
+               -d "{\"content\": \"🚀 Deployment to Render triggered\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Send Final Status Notification
