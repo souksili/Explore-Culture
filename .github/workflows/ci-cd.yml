@@ -109,7 +109,8 @@ jobs:
 
       - name: Send Discord Notification
         run: |
+          payload=$(jq -n --arg content "$STATUS" '{content: $content}')
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"${{ env.STATUS }}\"}" \
+               -d "$payload" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
