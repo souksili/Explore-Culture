@@ -31,8 +31,7 @@ jobs:
       - name: Lint with flake8
         id: lint_flake8
         run: |
-          flake8 . --max-line-length=120 > lint_output.txt
-          cat lint_output.txt
+          flake8 . --max-line-length=120
         continue-on-error: true
 
       - name: Format code with black
