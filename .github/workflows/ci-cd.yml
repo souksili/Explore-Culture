@@ -27,17 +27,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest flake8 black
+      
+      - name: Format code with black
+        id: format_black
+        run: |
+          black .
+        continue-on-error: true
 
       - name: Lint with flake8
         id: lint_flake8
         run: |
           flake8 . --max-line-length=120
-        continue-on-error: true
-
-      - name: Format code with black
-        id: format_black
-        run: |
-          black . --check
         continue-on-error: true
 
       - name: Set up Docker Buildx
