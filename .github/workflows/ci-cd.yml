@@ -72,7 +72,7 @@ jobs:
         id: run_tests
         run: |
           sleep 10
-          docker compose -f ./docker-compose.yml exec web python test
+          docker compose -f ./docker-compose.yml exec web pytest /app --maxfail=1 --disable-warnings -q
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
