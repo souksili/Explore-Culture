@@ -1,0 +1,259 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background: linear-gradient(to bottom, #4e54c8, #8f94fb);
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    transition: background 0.3s ease-in-out;
+}
+
+.container {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 400px;
+    padding: 40px 30px;
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+}
+
+h1 {
+    color: #4e54c8;
+    margin-bottom: 25px;
+    font-size: 26px;
+    font-weight: bold;
+}
+
+#connexion-form {
+    margin-top: 20px;
+}
+
+.input-container {
+    position: relative;
+    margin-bottom: 40px;
+}
+
+.input-container i {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: #4e54c8;
+    font-size: 18px;
+}
+
+input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    font-size: 15px;
+    background: #f9f9f9;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus {
+    border-color: #4e54c8;
+    box-shadow: 0 0 8px rgba(78, 84, 200, 0.4);
+    background: #ffffff;
+}
+
+.input-container div {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    font-size: 12px;
+    color: red;
+    margin-top: 5px;
+    height: 15px;
+    line-height: 15px;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.input-container div.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+button {
+    background: linear-gradient(to right, #4e54c8, #8f94fb);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 14px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+button:hover {
+    background: linear-gradient(to right, #6e70e1, #a0a4fc);
+    transform: scale(1.02);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+p {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #666;
+}
+
+p a {
+    color: #4e54c8;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+p a:hover {
+    color: #6e70e1;
+}
+
+.social-login {
+    margin-top: 30px;
+}
+
+.social-login p {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #666;
+}
+
+.social-icon {
+    display: inline-block;
+    width: 48%;
+    padding: 12px 0;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    color: #fff;
+    margin: 2%;
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.social-icon.facebook {
+    background: #3b5998;
+    border-color: #3b5998;
+}
+
+.social-icon.twitter {
+    background: #1da1f2;
+    border-color: #1da1f2;
+}
+
+.social-icon:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.4s ease;
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: #4e54c8;
+    font-size: 20px;
+}
+
+.modal-content button {
+    background: #4e54c8;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background 0.3s ease;
+}
+
+.modal-content button:hover {
+    background: #6e70e1;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 25px;
+    }
+
+    input, button {
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    .social-icon {
+        font-size: 13px;
+    }
+}
+
+.input-container div.show {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.3s ease, color 0.3s ease;
+}

@@ -4,3 +4,5 @@ pytest
 gunicorn
 psycopg2-binary
 python-dotenv
+flask_mail
+transformers
