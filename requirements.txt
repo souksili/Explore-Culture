@@ -5,4 +5,6 @@ gunicorn
 psycopg2-binary
 python-dotenv
 flask_mail
+flask_bcrypt
+flask_jwt_extended
 transformers
