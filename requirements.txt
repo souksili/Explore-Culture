@@ -6,5 +6,6 @@ psycopg2-binary
 python-dotenv
 flask_mail
 flask_bcrypt
+qrcode
 flask_jwt_extended
 transformers
