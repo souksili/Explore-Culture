@@ -104,7 +104,7 @@ jobs:
         id: run_flask
         run: |
           docker compose -f docker-compose.yml up -d
-          sleep 5  # Wait for the application to start
+          sleep 30  # Wait for the application to start
           curl http://localhost:5000/api
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
