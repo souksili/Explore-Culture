@@ -130,7 +130,7 @@ def inscription():
         f"Votre inscription a été réussie sur Explore Culture !\n\n"
         f"Merci pour votre inscription.\n\n"
         f"Cordialement,\nL'équipe Explore Culture."
-    )
+    ).encode('utf-8').decode('utf-8')
 
     try:
         send_email(recipient=email, subject=subject, body=body)
@@ -173,7 +173,7 @@ def recuperation_mdp():
         f"Cliquez sur ce lien pour réinitialiser votre mot de passe :\n{reset_link}\n\n"
         "Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail.\n\n"
         "Cordialement,\nL'équipe Explore Culture."
-    )
+    ).encode('utf-8').decode('utf-8')
 
     try:
         send_email(recipient=email, subject=subject, body=body)
