@@ -12,6 +12,13 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
 from email.utils import formataddr
+import locale
+import sys
+
+# Configurer l'encodage par défaut sur UTF-8
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+if sys.version_info[0] == 3:
+    sys.stdout.reconfigure(encoding='utf-8')
 
 # Initialisation de l'application Flask
 app = Flask(__name__)
@@ -69,6 +76,10 @@ def send_email(recipient, subject, body):
         if not smtp_password:
             logging.error("SMTP_PASSWORD is not set or is empty!")
             raise ValueError("SMTP_PASSWORD is required")
+
+        # Force UTF-8 encoding for recipient and subject
+        recipient = recipient.encode('utf-8', errors='replace').decode('utf-8')
+        subject = subject.encode('utf-8', errors='replace').decode('utf-8')
 
         msg = MIMEMultipart()
         msg['From'] = formataddr((str(Header('Explore Culture', 'utf-8')), smtp_username))
