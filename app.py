@@ -7,11 +7,15 @@ from datetime import timedelta
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import logging
+
 db = SQLAlchemy()
 
 app = Flask(__name__)
 
-# Configuration de l'application
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
@@ -22,7 +26,6 @@ app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME', 'sportapi97@gmail.com')
 
-# Initialisation des extensions
 db.init_app(app)
 bcrypt = Bcrypt(app)
 mail = Mail(app)
@@ -53,7 +56,36 @@ class Profil(db.Model):
     date_creation = db.Column(db.DateTime, default=datetime.utcnow)
     date_modification = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
-# Routes
+def send_email(recipient, subject, body):
+    """
+    Envoie un e-mail avec `smtplib`.
+    
+    :param recipient: Adresse e-mail du destinataire
+    :param subject: Sujet de l'e-mail
+    :param body: Corps du message
+    """
+    try:
+        smtp_server = os.getenv('MAIL_SERVER')
+        smtp_port = int(os.getenv('MAIL_PORT'))
+        smtp_username = os.getenv('MAIL_USERNAME')
+        smtp_password = os.getenv('MAIL_PASSWORD')
+
+        msg = MIMEMultipart()
+        msg['From'] = smtp_username
+        msg['To'] = recipient
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.sendmail(smtp_username, recipient, msg.as_string())
+
+        logging.info(f"Email envoyé avec succès à {recipient}.")
+
+    except Exception as e:
+        logging.error(f"Erreur lors de l'envoi de l'email : {e}")
+
 @app.route('/')
 def hello_world():
     return 'Hello, World!'
@@ -72,6 +104,9 @@ def inscription_page():
 
 @app.route('/inscription', methods=['POST'])
 def inscription():
+    """
+    Route pour l'inscription d'un utilisateur.
+    """
     data = request.get_json()
     email = data.get('email')
     mot_de_passe = data.get('mot_de_passe')
@@ -87,11 +122,16 @@ def inscription():
     db.session.add(utilisateur)
     db.session.commit()
 
-    msg = Message('Confirmation d\'inscription', sender=app.config.get('MAIL_DEFAULT_SENDER', 'sportapi97@gmail.com'), recipients=[email])
-    msg.body = f"Bonjour {nom_utilisateur},\n\nVotre inscription a été réussie sur Explore Culture !\n\nMerci pour votre inscription."
-    
+    subject = "Confirmation d'inscription"
+    body = (
+        f"Bonjour {nom_utilisateur},\n\n"
+        f"Votre inscription a été réussie sur Explore Culture !\n\n"
+        f"Merci pour votre inscription.\n\n"
+        f"Cordialement,\nL'équipe Explore Culture."
+    )
+
     try:
-        mail.send(msg)
+        send_email(recipient=email, subject=subject, body=body)
         return jsonify({"message": "Inscription réussie, email de confirmation envoyé."}), 201
     except Exception as e:
         return jsonify({"message": f"Erreur d'envoi d'email : {str(e)}"}), 500
@@ -114,6 +154,9 @@ def connexion():
 
 @app.route('/recuperation_mdp', methods=['POST'])
 def recuperation_mdp():
+    """
+    Route pour la récupération du mot de passe d'un utilisateur.
+    """
     data = request.get_json()
     email = data.get('email')
 
@@ -121,11 +164,17 @@ def recuperation_mdp():
     if not utilisateur:
         return jsonify({"message": "Utilisateur non trouvé"}), 404
 
-    msg = Message('Réinitialisation de votre mot de passe', sender=app.config.get('MAIL_DEFAULT_SENDER', 'sportapi97@gmail.com'), recipients=[email])
-    msg.body = f"Bonjour,\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : http://votreurl.com/reset_password/{email}"
-    
+    subject = "Réinitialisation de votre mot de passe"
+    reset_link = f"http://votreurl.com/reset_password/{email}"
+    body = (
+        f"Bonjour,\n\n"
+        f"Cliquez sur ce lien pour réinitialiser votre mot de passe :\n{reset_link}\n\n"
+        "Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail.\n\n"
+        "Cordialement,\nL'équipe Explore Culture."
+    )
+
     try:
-        mail.send(msg)
+        send_email(recipient=email, subject=subject, body=body)
         return jsonify({"message": "Lien de réinitialisation envoyé par email."}), 200
     except Exception as e:
         return jsonify({"message": f"Erreur d'envoi d'email : {str(e)}"}), 500
