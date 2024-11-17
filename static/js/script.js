@@ -142,6 +142,71 @@ async function register() {
     }
 }
 
+async function recoverPassword() {
+    const email = document.getElementById("recovery-email").value.trim();
+    const messageElement = document.getElementById("recovery-email-message");
+
+    if (!validateEmailInput("recovery-email", "recovery-email-message")) {
+        return;
+    }
+
+    try {
+        const baseUrl = getApiBaseUrl();
+        const response = await fetch(`${baseUrl}/recuperation_mdp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            messageElement.textContent = "Lien de réinitialisation envoyé.";
+            messageElement.style.color = "green";
+        } else {
+            messageElement.textContent = data.message || "Erreur lors de l'envoi du lien.";
+            messageElement.style.color = "red";
+        }
+    } catch (error) {
+        console.error("Erreur lors de la récupération de mot de passe:", error);
+        messageElement.textContent = "Erreur lors de l'envoi du lien. Veuillez réessayer.";
+        messageElement.style.color = "red";
+    }
+}
+
+async function resetPassword(token) {
+    const newPassword = document.getElementById("reset-password").value.trim();
+    const messageElement = document.getElementById("reset-password-message");
+
+    if (newPassword.length < 6) {
+        messageElement.textContent = "Le mot de passe doit contenir au moins 6 caractères.";
+        messageElement.style.color = "red";
+        return;
+    }
+
+    try {
+        const baseUrl = getApiBaseUrl();
+        const response = await fetch(`${baseUrl}/reset_password/${token}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ new_password: newPassword })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            messageElement.textContent = "Mot de passe réinitialisé avec succès.";
+            messageElement.style.color = "green";
+            setTimeout(() => window.location.href = "connexion", 2000);
+        } else {
+            messageElement.textContent = data.message || "Erreur lors de la réinitialisation.";
+            messageElement.style.color = "red";
+        }
+    } catch (error) {
+        console.error("Erreur lors de la réinitialisation:", error);
+        messageElement.textContent = "Erreur lors de la réinitialisation. Veuillez réessayer.";
+        messageElement.style.color = "red";
+    }
+}
+
 function validateEmailInput(inputId, messageId) {
     const email = document.getElementById(inputId).value.trim();
     const messageElement = document.getElementById(messageId);
