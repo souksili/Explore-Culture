@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask, jsonify, request, render_template
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
@@ -6,16 +7,15 @@ from flask_jwt_extended import JWTManager, create_access_token
 from datetime import timedelta
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import logging
+from email.header import Header
 
-db = SQLAlchemy()
-
+# Initialisation de l'application Flask
 app = Flask(__name__)
 
+# Configuration de l'application
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
@@ -26,11 +26,13 @@ app.config['MAIL_USERNAME'] = os.getenv('SMTP_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('SMTP_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('SMTP_USERNAME', 'sportapi97@gmail.com')
 
-db.init_app(app)
+# Initialisation des extensions
+db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 mail = Mail(app)
 jwt = JWTManager(app)
 
+# Modèles de base de données
 class Utilisateur(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -41,7 +43,6 @@ class Utilisateur(db.Model):
     date_creation = db.Column(db.DateTime, default=datetime.utcnow)
     date_modification = db.Column(db.DateTime, onupdate=datetime.utcnow)
     date_derniere_connexion = db.Column(db.DateTime)
-
     profil = db.relationship('Profil', backref='utilisateur', lazy=True)
 
 class Profil(db.Model):
@@ -56,6 +57,7 @@ class Profil(db.Model):
     date_creation = db.Column(db.DateTime, default=datetime.utcnow)
     date_modification = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
+# Fonction pour envoyer des emails
 def send_email(recipient, subject, body):
     try:
         smtp_server = os.getenv('MAIL_SERVER')
@@ -74,7 +76,7 @@ def send_email(recipient, subject, body):
         msg = MIMEMultipart()
         msg['From'] = smtp_username
         msg['To'] = recipient
-        msg['Subject'] = subject
+        msg['Subject'] = Header(subject, 'utf-8')
         msg.attach(MIMEText(body, 'plain', 'utf-8'))
 
         with smtplib.SMTP(smtp_server, smtp_port) as server:
@@ -88,6 +90,7 @@ def send_email(recipient, subject, body):
         logging.error(f"Erreur lors de l'envoi de l'email : {e}")
         raise
 
+# Routes de l'application
 @app.route('/')
 def hello_world():
     return 'Hello, World!'
@@ -106,9 +109,6 @@ def inscription_page():
 
 @app.route('/inscription', methods=['POST'])
 def inscription():
-    """
-    Route pour l'inscription d'un utilisateur.
-    """
     data = request.get_json()
     email = data.get('email')
     mot_de_passe = data.get('mot_de_passe')
@@ -119,7 +119,6 @@ def inscription():
         return jsonify({"message": "Email déjà utilisé"}), 400
 
     mot_de_passe_hashé = bcrypt.generate_password_hash(mot_de_passe).decode('utf-8')
-
     utilisateur = Utilisateur(email=email, mot_de_passe=mot_de_passe_hashé, nom_utilisateur=nom_utilisateur)
     db.session.add(utilisateur)
     db.session.commit()
@@ -130,7 +129,7 @@ def inscription():
         f"Votre inscription a été réussie sur Explore Culture !\n\n"
         f"Merci pour votre inscription.\n\n"
         f"Cordialement,\nL'équipe Explore Culture."
-    ).encode('utf-8').decode('utf-8')
+    )
 
     try:
         send_email(recipient=email, subject=subject, body=body)
@@ -156,9 +155,6 @@ def connexion():
 
 @app.route('/recuperation_mdp', methods=['POST'])
 def recuperation_mdp():
-    """
-    Route pour la récupération du mot de passe d'un utilisateur.
-    """
     data = request.get_json()
     email = data.get('email')
 
@@ -173,7 +169,7 @@ def recuperation_mdp():
         f"Cliquez sur ce lien pour réinitialiser votre mot de passe :\n{reset_link}\n\n"
         "Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail.\n\n"
         "Cordialement,\nL'équipe Explore Culture."
-    ).encode('utf-8').decode('utf-8')
+    )
 
     try:
         send_email(recipient=email, subject=subject, body=body)
