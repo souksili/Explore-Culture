@@ -92,7 +92,7 @@ async function login() {
             messageElement.textContent = "Connexion réussie !";
             messageElement.style.color = "green";
             localStorage.setItem("accessToken", data.access_token);
-            setTimeout(() => window.location.href = "dashboard.html", 1000);
+            setTimeout(() => window.location.href = "dashboard", 1000);
         } else {
             messageElement.textContent = data.message || "Erreur de connexion.";
             messageElement.style.color = "red";
@@ -130,7 +130,7 @@ async function register() {
         if (response.ok) {
             messageElement.textContent = "Inscription réussie ! Veuillez vérifier votre email.";
             messageElement.style.color = "green";
-            setTimeout(() => window.location.href = "connexion.html", 2000);
+            setTimeout(() => window.location.href = "connexion", 2000);
         } else {
             messageElement.textContent = data.message || "Erreur lors de l'inscription.";
             messageElement.style.color = "red";
