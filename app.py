@@ -24,8 +24,6 @@ bcrypt = Bcrypt(app)
 mail = Mail(app)
 jwt = JWTManager(app)
 
-app.config['BASE_URL'] = os.getenv('BASE_URL', 'http://localhost:5000')
-
 # Routes
 @app.route('/')
 def hello_world():
@@ -110,8 +108,7 @@ def recuperation_mdp():
         'Réinitialisation de votre mot de passe',
         recipients=[email]
     )
-    base_url = app.config['BASE_URL']
-    msg.body = f"Bonjour,\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : http://{base_url}/reset_password/{email}"
+    msg.body = f"Bonjour,\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : http://base_url/reset_password/{email}"
 
     try:
         mail.send(msg)
