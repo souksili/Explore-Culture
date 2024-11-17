@@ -74,8 +74,8 @@ def send_email(recipient, subject, body):
             raise ValueError("SMTP_PASSWORD is required")
 
         msg = MIMEMultipart()
-        msg['From'] = smtp_username
-        msg['To'] = recipient
+        msg['From'] = Header(smtp_username, 'utf-8')
+        msg['To'] = Header(recipient, 'utf-8')
         msg['Subject'] = Header(subject, 'utf-8')
         msg.attach(MIMEText(body, 'plain', 'utf-8'))
 
@@ -90,7 +90,6 @@ def send_email(recipient, subject, body):
         logging.error(f"Erreur lors de l'envoi de l'email : {e}")
         raise
 
-# Routes de l'application
 @app.route('/')
 def hello_world():
     return 'Hello, World!'
