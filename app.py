@@ -87,7 +87,7 @@ def inscription():
     db.session.add(utilisateur)
     db.session.commit()
 
-    msg = Message('Confirmation d\'inscription', recipients=[email])
+    msg = Message('Confirmation d\'inscription',sender=app.config['MAIL_DEFAULT_SENDER'], recipients=[email])
     msg.body = f"Bonjour {nom_utilisateur},\n\nVotre inscription a été réussie sur Explore Culture !\n\nMerci pour votre inscription."
     
     try:
@@ -121,7 +121,7 @@ def recuperation_mdp():
     if not utilisateur:
         return jsonify({"message": "Utilisateur non trouvé"}), 404
 
-    msg = Message('Réinitialisation de votre mot de passe', recipients=[email])
+    msg = Message('Réinitialisation de votre mot de passe',sender=app.config['MAIL_DEFAULT_SENDER'], recipients=[email])
     msg.body = f"Bonjour,\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : http://votreurl.com/reset_password/{email}"
     
     try:
