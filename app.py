@@ -104,73 +104,84 @@ def inscription_page():
 
 @app.route('/inscription', methods=['POST'])
 def inscription():
-    data = request.get_json()
-    email = data.get('email')
-    mot_de_passe = data.get('mot_de_passe')
-    nom_utilisateur = data.get('nom_utilisateur')
-
-    utilisateur_existant = Utilisateur.query.filter_by(email=email).first()
-    if utilisateur_existant:
-        return jsonify({"message": "Email déjà utilisé"}), 400
-
-    mot_de_passe_hashé = bcrypt.generate_password_hash(mot_de_passe).decode('utf-8')
-    utilisateur = Utilisateur(email=email, mot_de_passe=mot_de_passe_hashé, nom_utilisateur=nom_utilisateur)
-    db.session.add(utilisateur)
-    db.session.commit()
-
-    subject = "Confirmation d'inscription"
-    body = (
-        f"Bonjour {nom_utilisateur},\n\n"
-        f"Votre inscription a été réussie sur Explore Culture !\n\n"
-        f"Merci pour votre inscription.\n\n"
-        f"Cordialement,\nL'équipe Explore Culture."
-    )
-
     try:
+        data = request.get_json()
+        email = data.get('email')
+        mot_de_passe = data.get('mot_de_passe')
+        nom_utilisateur = data.get('nom_utilisateur')
+
+        utilisateur_existant = Utilisateur.query.filter_by(email=email).first()
+        if utilisateur_existant:
+            return jsonify({"message": "Email déjà utilisé"}), 400
+
+        mot_de_passe_hashé = bcrypt.generate_password_hash(mot_de_passe).decode('utf-8')
+        utilisateur = Utilisateur(email=email, mot_de_passe=mot_de_passe_hashé, nom_utilisateur=nom_utilisateur)
+        db.session.add(utilisateur)
+        db.session.commit()
+
+        subject = "Confirmation d'inscription"
+        body = (
+            f"Bonjour {nom_utilisateur},\n\n"
+            f"Votre inscription a été réussie sur Explore Culture !\n\n"
+            f"Merci pour votre inscription.\n\n"
+            f"Cordialement,\nL'équipe Explore Culture."
+        )
+
         send_email(recipient=email, subject=subject, body=body)
         return jsonify({"message": "Inscription réussie, email de confirmation envoyé."}), 201
     except Exception as e:
-        return jsonify({"message": f"Erreur d'envoi d'email : {str(e)}"}), 500
+        logging.error(f"Erreur lors de l'inscription : {e}")
+        return jsonify({"message": "Une erreur est survenue lors de l'inscription"}), 500
 
 @app.route('/connexion', methods=['POST'])
 def connexion():
-    data = request.get_json()
-    email = data.get('email')
-    mot_de_passe = data.get('mot_de_passe')
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        mot_de_passe = data.get('mot_de_passe')
 
-    utilisateur = Utilisateur.query.filter_by(email=email).first()
-    if not utilisateur:
-        return jsonify({"message": "Utilisateur non trouvé"}), 404
+        utilisateur = Utilisateur.query.filter_by(email=email).first()
+        if not utilisateur:
+            return jsonify({"message": "Utilisateur non trouvé"}), 404
 
-    if not bcrypt.check_password_hash(utilisateur.mot_de_passe, mot_de_passe):
-        return jsonify({"message": "Mot de passe incorrect"}), 401
+        if not bcrypt.check_password_hash(utilisateur.mot_de_passe, mot_de_passe):
+            return jsonify({"message": "Mot de passe incorrect"}), 401
 
-    access_token = create_access_token(identity=utilisateur.id, expires_delta=timedelta(days=1))
-    return jsonify(access_token=access_token), 200
+        access_token = create_access_token(identity=utilisateur.id, expires_delta=timedelta(days=1))
+        return jsonify(access_token=access_token), 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la connexion : {e}")
+        return jsonify({"message": "Une erreur est survenue lors de la connexion"}), 500
 
 @app.route('/recuperation_mdp', methods=['POST'])
 def recuperation_mdp():
-    data = request.get_json()
-    email = data.get('email')
-
-    utilisateur = Utilisateur.query.filter_by(email=email).first()
-    if not utilisateur:
-        return jsonify({"message": "Utilisateur non trouvé"}), 404
-
-    subject = "Réinitialisation de votre mot de passe"
-    reset_link = f"http://votreurl.com/reset_password/{email}"
-    body = (
-        f"Bonjour,\n\n"
-        f"Cliquez sur ce lien pour réinitialiser votre mot de passe :\n{reset_link}\n\n"
-        "Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail.\n\n"
-        "Cordialement,\nL'équipe Explore Culture."
-    )
-
     try:
+        data = request.get_json()
+        email = data.get('email')
+
+        utilisateur = Utilisateur.query.filter_by(email=email).first()
+        if not utilisateur:
+            return jsonify({"message": "Utilisateur non trouvé"}), 404
+
+        subject = "Réinitialisation de votre mot de passe"
+        reset_link = f"http://votreurl.com/reset_password/{email}"
+        body = (
+            f"Bonjour,\n\n"
+            f"Cliquez sur ce lien pour réinitialiser votre mot de passe :\n{reset_link}\n\n"
+            "Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail.\n\n"
+            "Cordialement,\nL'équipe Explore Culture."
+        )
+
         send_email(recipient=email, subject=subject, body=body)
         return jsonify({"message": "Lien de réinitialisation envoyé par email."}), 200
     except Exception as e:
-        return jsonify({"message": f"Erreur d'envoi d'email : {str(e)}"}), 500
+        logging.error(f"Erreur lors de la récupération de mot de passe : {e}")
+        return jsonify({"message": "Une erreur est survenue"}), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logging.error(f"Erreur non capturée : {e}")
+    return jsonify({"message": "Une erreur est survenue"}), 500
 
 if __name__ == '__main__':
     with app.app_context():
