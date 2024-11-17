@@ -20,7 +20,7 @@ app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME', 'sportapi97@gmail.com')
 
 # Initialisation des extensions
 db.init_app(app)
@@ -87,7 +87,7 @@ def inscription():
     db.session.add(utilisateur)
     db.session.commit()
 
-    msg = Message('Confirmation d\'inscription',sender=os.getenv('MAIL_USERNAME'), recipients=[email])
+    msg = Message('Confirmation d\'inscription', sender=app.config.get('MAIL_DEFAULT_SENDER', 'sportapi97@gmail.com'), recipients=[email])
     msg.body = f"Bonjour {nom_utilisateur},\n\nVotre inscription a été réussie sur Explore Culture !\n\nMerci pour votre inscription."
     
     try:
@@ -121,7 +121,7 @@ def recuperation_mdp():
     if not utilisateur:
         return jsonify({"message": "Utilisateur non trouvé"}), 404
 
-    msg = Message('Réinitialisation de votre mot de passe',sender=os.getenv('MAIL_USERNAME'), recipients=[email])
+    msg = Message('Réinitialisation de votre mot de passe', sender=app.config.get('MAIL_DEFAULT_SENDER', 'sportapi97@gmail.com'), recipients=[email])
     msg.body = f"Bonjour,\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : http://votreurl.com/reset_password/{email}"
     
     try:
