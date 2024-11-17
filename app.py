@@ -4,8 +4,10 @@ from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
 from flask_jwt_extended import JWTManager, create_access_token
 from datetime import timedelta
-from extensions import db
 from models import Utilisateur
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 app = Flask(__name__)
 
