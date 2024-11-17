@@ -22,9 +22,9 @@ app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
 app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME', 'sportapi97@gmail.com')
+app.config['MAIL_USERNAME'] = os.getenv('SMTP_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('SMTP_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('SMTP_USERNAME', 'sportapi97@gmail.com')
 
 db.init_app(app)
 bcrypt = Bcrypt(app)
@@ -57,18 +57,11 @@ class Profil(db.Model):
     date_modification = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
 def send_email(recipient, subject, body):
-    """
-    Envoie un e-mail avec `smtplib`.
-    
-    :param recipient: Adresse e-mail du destinataire
-    :param subject: Sujet de l'e-mail
-    :param body: Corps du message
-    """
     try:
         smtp_server = os.getenv('MAIL_SERVER')
         smtp_port = int(os.getenv('MAIL_PORT'))
-        smtp_username = os.getenv('MAIL_USERNAME')
-        smtp_password = os.getenv('MAIL_PASSWORD')
+        smtp_username = os.getenv('SMTP_USERNAME')
+        smtp_password = os.getenv('SMTP_PASSWORD')
 
         msg = MIMEMultipart()
         msg['From'] = smtp_username
