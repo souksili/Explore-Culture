@@ -1,10 +1,10 @@
 import os
 from flask import Flask, jsonify, request, render_template
-from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
 from flask_jwt_extended import JWTManager, create_access_token
 from datetime import timedelta
+from extensions import db
 from models import Utilisateur
 
 app = Flask(__name__)
@@ -12,15 +12,15 @@ app = Flask(__name__)
 # Configuration de l'application
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your_jwt_secret_key')
-app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.example.com')
-app.config['MAIL_PORT'] = os.getenv('MAIL_PORT', 587)
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 
-# Extensions
-db = SQLAlchemy(app)
+# Initialisation des extensions
+db.init_app(app)
 bcrypt = Bcrypt(app)
 mail = Mail(app)
 jwt = JWTManager(app)
@@ -103,4 +103,6 @@ def recuperation_mdp():
         return jsonify({"message": f"Erreur d'envoi d'email : {str(e)}"}), 500
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(debug=True, host="0.0.0.0", port=5000)
