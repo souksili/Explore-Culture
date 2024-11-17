@@ -144,9 +144,14 @@ async function register() {
 
 async function recoverPassword() {
     const email = document.getElementById("recovery-email").value.trim();
-    const messageElement = document.getElementById("recovery-message");
+    const messageElementId = "recovery-message";
 
-    if (!validateEmailInput("recovery-email", "recovery-message")) {
+    if (!document.getElementById(messageElementId)) {
+        console.error(`L'élément avec l'ID "${messageElementId}" est introuvable.`);
+        return;
+    }
+
+    if (!validateEmailInput("recovery-email", messageElementId)) {
         return;
     }
 
@@ -159,6 +164,8 @@ async function recoverPassword() {
         });
 
         const data = await response.json();
+        const messageElement = document.getElementById(messageElementId);
+
         if (response.ok) {
             messageElement.textContent = "Lien de réinitialisation envoyé par email.";
             messageElement.style.color = "green";
@@ -168,6 +175,7 @@ async function recoverPassword() {
         }
     } catch (error) {
         console.error("Erreur lors de la récupération du mot de passe:", error);
+        const messageElement = document.getElementById(messageElementId);
         messageElement.textContent = "Erreur lors de la récupération. Veuillez réessayer.";
         messageElement.style.color = "red";
     }
