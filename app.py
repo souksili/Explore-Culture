@@ -7,6 +7,8 @@ from flask_jwt_extended import JWTManager, create_access_token
 from datetime import timedelta
 from models import Utilisateur
 
+db = SQLAlchemy()
+
 app = Flask(__name__)
 
 # Configuration de l'application
@@ -19,7 +21,8 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 
-db = SQLAlchemy(app)
+
+db.init_app(app)
 bcrypt = Bcrypt(app)
 mail = Mail(app)
 jwt = JWTManager(app)
