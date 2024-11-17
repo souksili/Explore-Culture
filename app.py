@@ -63,11 +63,19 @@ def send_email(recipient, subject, body):
         smtp_username = os.getenv('SMTP_USERNAME')
         smtp_password = os.getenv('SMTP_PASSWORD')
 
+        logging.debug(f"SMTP Server: {smtp_server}")
+        logging.debug(f"SMTP Port: {smtp_port}")
+        logging.debug(f"SMTP Username: {smtp_username}")
+
+        if not smtp_password:
+            logging.error("SMTP_PASSWORD is not set or is empty!")
+            raise ValueError("SMTP_PASSWORD is required")
+
         msg = MIMEMultipart()
         msg['From'] = smtp_username
         msg['To'] = recipient
         msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
 
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
@@ -78,6 +86,7 @@ def send_email(recipient, subject, body):
 
     except Exception as e:
         logging.error(f"Erreur lors de l'envoi de l'email : {e}")
+        raise
 
 @app.route('/')
 def hello_world():
