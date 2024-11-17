@@ -11,6 +11,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
+from email.utils import formataddr
 
 # Initialisation de l'application Flask
 app = Flask(__name__)
@@ -24,7 +25,7 @@ app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('SMTP_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('SMTP_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('SMTP_USERNAME', 'sportapi97@gmail.com')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('SMTP_USERNAME')
 
 # Initialisation des extensions
 db = SQLAlchemy(app)
@@ -65,17 +66,13 @@ def send_email(recipient, subject, body):
         smtp_username = os.getenv('SMTP_USERNAME')
         smtp_password = os.getenv('SMTP_PASSWORD')
 
-        logging.debug(f"SMTP Server: {smtp_server}")
-        logging.debug(f"SMTP Port: {smtp_port}")
-        logging.debug(f"SMTP Username: {smtp_username}")
-
         if not smtp_password:
             logging.error("SMTP_PASSWORD is not set or is empty!")
             raise ValueError("SMTP_PASSWORD is required")
 
         msg = MIMEMultipart()
-        msg['From'] = Header(smtp_username, 'utf-8')
-        msg['To'] = Header(recipient, 'utf-8')
+        msg['From'] = formataddr((str(Header('Explore Culture', 'utf-8')), smtp_username))
+        msg['To'] = formataddr((str(Header(recipient, 'utf-8')), recipient))
         msg['Subject'] = Header(subject, 'utf-8')
         msg.attach(MIMEText(body, 'plain', 'utf-8'))
 
@@ -85,7 +82,6 @@ def send_email(recipient, subject, body):
             server.sendmail(smtp_username, recipient, msg.as_string())
 
         logging.info(f"Email envoyé avec succès à {recipient}.")
-
     except Exception as e:
         logging.error(f"Erreur lors de l'envoi de l'email : {e}")
         raise
