@@ -163,11 +163,9 @@ def connexion():
         return jsonify({"message": "Une erreur est survenue lors de la connexion"}), 500
 
 @app.route('/deconnexion', methods=['POST'])
-@jwt_required()
 def deconnexion():
     try:
         response = jsonify({"message": "Déconnexion réussie"})
-        unset_jwt_cookies(response)
         return response, 200
     except Exception as e:
         logging.error(f"Erreur lors de la déconnexion : {e}")

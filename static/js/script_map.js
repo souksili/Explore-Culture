@@ -179,7 +179,6 @@ document.getElementById('logoutLink').addEventListener('click', (event) => {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
         }
     })
     .then(response => response.json())
