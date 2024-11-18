@@ -1,7 +1,22 @@
-const accessToken = localStorage.getItem('access_token');
-if (!accessToken) {
-    window.location.href = '/connexion';
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+        window.location.href = '/connexion';
+    } else {
+        fetch('/dashboard', {
+            method: 'GET',
+        })
+        .then(response => {
+            if (response.status === 401) {
+                window.location.href = '/connexion';
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            window.location.href = '/connexion';
+        });
+    }
+});
 
 document.getElementById('burgerIcon').addEventListener('click', () => {
     const menuContent = document.getElementById('menuContent');
