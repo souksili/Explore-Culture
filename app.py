@@ -13,6 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from email.header import Header
 from email.utils import formataddr
 import unicodedata
+from flask_jwt_extended import jwt_required, unset_jwt_cookies
 
 app = Flask(__name__)
 
@@ -107,6 +108,7 @@ def inscription_page():
     return render_template('inscription.html')
 
 @app.route('/dashboard', methods=['GET'])
+@jwt_required()
 def dashboard_page():
     return render_template('map.html')
 
@@ -160,6 +162,17 @@ def connexion():
     except Exception as e:
         logging.error(f"Erreur lors de la connexion : {e}")
         return jsonify({"message": "Une erreur est survenue lors de la connexion"}), 500
+
+@app.route('/deconnexion', methods=['POST'])
+@jwt_required()
+def deconnexion():
+    try:
+        response = jsonify({"message": "Déconnexion réussie"})
+        unset_jwt_cookies(response)
+        return response, 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la déconnexion : {e}")
+        return jsonify({"message": "Une erreur est survenue lors de la déconnexion"}), 500
 
 @app.route('/recuperation_mdp', methods=['POST'])
 def recuperation_mdp():

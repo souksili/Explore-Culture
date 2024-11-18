@@ -1,3 +1,26 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+        window.location.href = '/connexion';
+    } else {
+        fetch('/dashboard', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        })
+        .then(response => {
+            if (response.status === 401) {
+                window.location.href = '/connexion';
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            window.location.href = '/connexion';
+        });
+    }
+});
+
 document.getElementById('burgerIcon').addEventListener('click', () => {
     const menuContent = document.getElementById('menuContent');
     menuContent.style.display = menuContent.style.display === 'flex' ? 'none' : 'flex';
@@ -143,4 +166,29 @@ window.addEventListener('storage', (event) => {
     if (event.key === 'culturalAddresses') {
         location.reload();
     }
+});
+
+document.getElementById('logoutLink').addEventListener('click', (event) => {
+    event.preventDefault();
+
+    fetch('/deconnexion', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === "Déconnexion réussie") {
+            localStorage.removeItem('access_token');
+            window.location.href = '/connexion';
+        } else {
+            alert('Erreur lors de la déconnexion');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la déconnexion');
+    });
 });
