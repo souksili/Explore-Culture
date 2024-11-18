@@ -5,15 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         fetch('/dashboard', {
             method: 'GET',
-        })
-        .then(response => {
-            if (response.status === 401) {
-                window.location.href = '/connexion';
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            window.location.href = '/connexion';
         });
     }
 });
