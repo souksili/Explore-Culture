@@ -168,17 +168,24 @@ window.addEventListener('storage', (event) => {
 document.getElementById('logoutLink').addEventListener('click', (event) => {
     event.preventDefault();
 
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+        alert('Vous n\'êtes pas connecté.');
+        window.location.href = '/connexion';
+        return;
+    }
+
     fetch('/deconnexion', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            'Authorization': `Bearer ${accessToken}`
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.message === "Déconnexion réussie") {
-            localStorage.removeItem('access_token');
+            localStorage.removeItem('accessToken');
             window.location.href = '/connexion';
         } else {
             alert('Erreur lors de la déconnexion');
