@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_map.css') }}">
 </head>
 <body>
     <div class="burger-menu">
@@ -60,6 +60,6 @@
             <button id="submitRating">Soumettre</button>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script src="{{ url_for('static', filename='js/script_map.js') }}"></script>
 </body>
 </html>
