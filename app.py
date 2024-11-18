@@ -108,7 +108,6 @@ def inscription_page():
     return render_template('inscription.html')
 
 @app.route('/dashboard', methods=['GET'])
-@jwt_required()
 def dashboard_page():
     return render_template('map.html')
 
