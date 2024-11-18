@@ -1,0 +1,301 @@
+/* Global Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to bottom, #1e3c72, #2a5298);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+h1 {
+    text-align: center;
+    color: #f8f9fa;
+    margin: 20px 0;
+    font-size: 2rem;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+#chatToggleContainer {
+    text-align: center;
+    margin: 10px 0;
+}
+
+#toggleChat {
+    padding: 10px 20px;
+    border-radius: 30px;
+    background: linear-gradient(to right, #f12711, #f5af19);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#toggleChat:hover {
+    background: linear-gradient(to right, #f5af19, #f12711);
+    transform: scale(1.05);
+}
+
+#content {
+    display: flex;
+    flex: 1;
+    gap: 15px;
+    padding: 10px;
+    overflow: hidden;
+}
+
+#mapContainer {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+#map {
+    flex: 1;
+    height: 100%;
+}
+
+#controls {
+    padding: 10px;
+    background: #2e2e2e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#startButton, #toggleInstructions {
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#startButton {
+    background: linear-gradient(to right, #56ab2f, #a8e063);
+}
+
+#startButton:hover:not(:disabled) {
+    background: linear-gradient(to right, #a8e063, #56ab2f);
+    transform: scale(1.05);
+}
+
+#startButton:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+#toggleInstructions {
+    background: linear-gradient(to right, #ff5722, #ff9800);
+}
+
+#toggleInstructions:hover {
+    background: linear-gradient(to right, #ff9800, #ff5722);
+    transform: scale(1.05);
+}
+
+/* Chat Container */
+#chatContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+#chatBox {
+    flex: 1;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #000; /* Texte en noir */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#chatBox p {
+    margin: 0;
+    line-height: 1.6;
+    color: #000; /* Texte en noir */
+}
+
+#chatBox p b {
+    color: #000; /* Nom en noir */
+}
+
+.input-container {
+    display: flex;
+    padding: 15px;
+    background: #2e2e2e;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#userInput {
+    flex: 1;
+    padding: 15px;
+    border-radius: 30px;
+    border: none;
+    font-size: 16px;
+    outline: none;
+    margin-right: 10px;
+    background: #fff;
+    color: #000; /* Texte en noir */
+}
+
+#userInput:focus {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+button {
+    padding: 15px 20px;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+button:hover {
+    background: linear-gradient(to right, #2575fc, #6a11cb);
+    transform: scale(1.05);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff; /* Fond clair */
+    color: #000; /* Texte en noir */
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.close {
+    float: right;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.rating {
+    margin: 20px 0;
+}
+
+.star {
+    font-size: 2rem;
+    cursor: pointer;
+    color: #ccc;
+    transition: color 0.3s ease;
+}
+
+.star:hover,
+.star:hover ~ .star {
+    color: #ff9800;
+}
+
+.star.selected {
+    color: #ff9800;
+}
+
+/* Instructions Styling */
+.leaflet-routing-container {
+    background: rgba(255, 255, 255, 0.9); /* Fond clair */
+    color: #000; /* Texte en noir */
+    border: 1px solid #ccc; /* Bordure pour contraste */
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* Burger Menu Styles */
+.burger-menu {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.burger-icon {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.burger-icon .bar {
+    width: 25px;
+    height: 3px;
+    background-color: #fff;
+    margin: 4px 0;
+    transition: 0.3s;
+}
+
+.menu-content {
+    display: none;
+    flex-direction: column;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    position: absolute;
+    top: 40px;
+    right: 0;
+    z-index: 1000;
+}
+
+.menu-content .menu-item {
+    color: #000;
+    text-decoration: none;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    transition: 0.3s;
+}
+
+.menu-content .menu-item:last-child {
+    border-bottom: none;
+}
+
+.menu-content .menu-item:hover {
+    background-color: #f0f0f0;
+}

@@ -106,6 +106,10 @@ def connexion_page():
 def inscription_page():
     return render_template('inscription.html')
 
+@app.route('/dashboard', methods=['GET'])
+def inscription_page():
+    return render_template('map.html')
+
 @app.route('/inscription', methods=['POST'])
 def inscription():
     try:
