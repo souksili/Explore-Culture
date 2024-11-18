@@ -1,13 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) {
-        window.location.href = '/connexion';
-    } else {
-        fetch('/dashboard', {
-            method: 'GET',
-        });
-    }
-});
+const accessToken = localStorage.getItem('access_token');
+if (!accessToken) {
+    window.location.href = '/connexion';
+}
 
 document.getElementById('burgerIcon').addEventListener('click', () => {
     const menuContent = document.getElementById('menuContent');
