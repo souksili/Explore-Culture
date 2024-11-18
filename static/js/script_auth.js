@@ -12,6 +12,29 @@ document.addEventListener("DOMContentLoaded", function () {
     setupRealTimeValidation();
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+        window.location.href = '/connexion';
+    } else {
+        fetch('/dashboard', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        })
+        .then(response => {
+            if (response.status === 401) {
+                window.location.href = '/connexion';
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            window.location.href = '/connexion';
+        });
+    }
+});
+
 function getApiBaseUrl() {
     if (window.location.hostname === "localhost") {
         return "http://localhost:5000";
