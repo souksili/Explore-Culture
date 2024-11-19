@@ -120,27 +120,33 @@ def send_email(recipient, subject, body):
 
 @app.route('/test')
 def hello_world():
+    logging.info("Route /test appelée")
     return 'Hello, World!'
 
 @app.route('/api')
 def api():
+    logging.info("Route /api appelée")
     return jsonify(message="Bienvenue dans l'API de Explore Culture")
 
 @app.route('/connexion', methods=['GET'])
 def connexion_page():
+    logging.info("Route /connexion (GET) appelée")
     return render_template('connexion.html')
 
 @app.route('/inscription', methods=['GET'])
 def inscription_page():
+    logging.info("Route /inscription (GET) appelée")
     return render_template('inscription.html')
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard_page():
+    logging.info("Route /dashboard appelée")
     return render_template('map.html')
 
 @app.route('/inscription', methods=['POST'])
 def inscription():
     try:
+        logging.info("Route /inscription (POST) appelée")
         data = request.get_json()
         email = data.get('email')
         mot_de_passe = data.get('mot_de_passe')
@@ -148,6 +154,7 @@ def inscription():
 
         utilisateur_existant = Utilisateur.query.filter_by(email=email).first()
         if utilisateur_existant:
+            logging.warning(f"Email déjà utilisé : {email}")
             return jsonify({"message": "Email déjà utilisé"}), 400
 
         mot_de_passe_hashé = bcrypt.generate_password_hash(mot_de_passe).decode('utf-8')
@@ -164,6 +171,7 @@ def inscription():
         )
 
         send_email(recipient=email, subject=subject, body=body)
+        logging.info(f"Inscription réussie pour {email}")
         return jsonify({"message": "Inscription reussie, email de confirmation envoye."}), 201
     except Exception as e:
         logging.error(f"Erreur lors de l'inscription : {e}")
@@ -172,18 +180,22 @@ def inscription():
 @app.route('/connexion', methods=['POST'])
 def connexion():
     try:
+        logging.info("Route /connexion (POST) appelée")
         data = request.get_json()
         email = data.get('email')
         mot_de_passe = data.get('mot_de_passe')
 
         utilisateur = Utilisateur.query.filter_by(email=email).first()
         if not utilisateur:
+            logging.warning(f"Utilisateur non trouvé : {email}")
             return jsonify({"message": "Utilisateur non trouvé"}), 404
 
         if not bcrypt.check_password_hash(utilisateur.mot_de_passe, mot_de_passe):
+            logging.warning(f"Mot de passe incorrect pour : {email}")
             return jsonify({"message": "Mot de passe incorrect"}), 401
 
         access_token = create_access_token(identity=utilisateur.id, expires_delta=timedelta(days=1))
+        logging.info(f"Connexion réussie pour {email}")
         return jsonify(access_token=access_token), 200
     except Exception as e:
         logging.error(f"Erreur lors de la connexion : {e}")
@@ -192,6 +204,7 @@ def connexion():
 @app.route('/deconnexion', methods=['POST'])
 def deconnexion():
     try:
+        logging.info("Route /deconnexion appelée")
         response = jsonify({"message": "Déconnexion réussie"})
         return response, 200
     except Exception as e:
@@ -201,11 +214,13 @@ def deconnexion():
 @app.route('/recuperation_mdp', methods=['POST'])
 def recuperation_mdp():
     try:
+        logging.info("Route /recuperation_mdp appelée")
         data = request.get_json()
         email = data.get('email')
 
         utilisateur = Utilisateur.query.filter_by(email=email).first()
         if not utilisateur:
+            logging.warning(f"Utilisateur non trouvé pour la récupération de mot de passe : {email}")
             return jsonify({"message": "Utilisateur non trouvé"}), 404
 
         subject = "Reinitialisation de votre mot de passe"
@@ -218,6 +233,7 @@ def recuperation_mdp():
         )
 
         send_email(recipient=email, subject=subject, body=body)
+        logging.info(f"Lien de réinitialisation de mot de passe envoyé à {email}")
         return jsonify({"message": "Lien de reinitialisation envoye par email."}), 200
     except Exception as e:
         logging.error(f"Erreur lors de la récupération de mot de passe : {e}")
@@ -228,13 +244,12 @@ def handle_exception(e):
     logging.error(f"Erreur non capturée : {e}")
     return jsonify({"message": "Une erreur est survenue"}), 500
 
-
-
 user_context = {}
 
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
+        logging.info("Route /chat appelée")
         req = request.get_json(silent=True, force=True)
         user_input = req.get('message').lower()
         user_id = req.get('user_id', 'default')
@@ -292,21 +307,26 @@ def chat():
             response = fallback_response()
 
     except Exception as e:
+        logging.error(f"Erreur dans la route /chat : {e}")
         response = jsonify({"response": f"Une erreur est survenue: {str(e)}"})
 
     return response
 
 def welcome_response():
+    logging.info("Réponse de bienvenue envoyée")
     return jsonify({"response": "Bonjour! Où aimeriez-vous voyager? (Par exemple : indiquez un pays)"})
 
 def ask_country_response():
+    logging.info("Demande de pays envoyée")
     return jsonify({"response": "Quel pays souhaitez-vous visiter?"})
 
 def fallback_response():
+    logging.info("Réponse de repli envoyée")
     return jsonify({"response": "Désolé, je n'ai pas compris. Pouvez-vous reformuler?"})
 
 def get_cultural_heritage_addresses(country, preferences):
     try:
+        logging.info(f"Récupération des adresses de patrimoine culturel pour {country} avec préférences {preferences}")
         messages = [
             {
                 "role": "user",
@@ -323,12 +343,14 @@ def get_cultural_heritage_addresses(country, preferences):
         else:
             return []
     except Exception as e:
+        logging.error(f"Erreur lors de la récupération des adresses de patrimoine culturel : {e}")
         return []
 
 @app.route('/api/historique', methods=['POST'])
 @jwt_required()
 def ajouter_historique():
     try:
+        logging.info("Route /api/historique (POST) appelée")
         data = request.get_json()
         utilisateur_id = get_jwt_identity()
         addresses = data.get('addresses', [])
@@ -344,6 +366,7 @@ def ajouter_historique():
             db.session.add(historique)
 
         db.session.commit()
+        logging.info(f"Historique mis à jour pour l'utilisateur {utilisateur_id}")
         return jsonify({"message": "Historique mis à jour."}), 201
     except Exception as e:
         logging.error(f"Erreur lors de l'ajout à l'historique : {e}")
@@ -353,6 +376,7 @@ def ajouter_historique():
 @jwt_required()
 def recuperer_historique():
     try:
+        logging.info("Route /api/historique (GET) appelée")
         utilisateur_id = get_jwt_identity()
         logging.info(f"Utilisateur ID: {utilisateur_id}")
 
