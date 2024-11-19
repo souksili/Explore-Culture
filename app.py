@@ -13,7 +13,10 @@ from email.mime.multipart import MIMEMultipart
 from email.header import Header
 from email.utils import formataddr
 import unicodedata
+import json
+import re
 from flask_jwt_extended import jwt_required, unset_jwt_cookies
+from mistralai import Mistral
 
 app = Flask(__name__)
 
@@ -31,6 +34,13 @@ db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 mail = Mail(app)
 jwt = JWTManager(app)
+
+api_key = os.getenv('API_KEY')
+model = os.getenv('MODEL')
+
+client = Mistral(api_key=api_key)
+
+user_context = {}
 
 def remove_accents(input_str):
     return ''.join(
@@ -200,6 +210,99 @@ def recuperation_mdp():
 def handle_exception(e):
     logging.error(f"Erreur non capturée : {e}")
     return jsonify({"message": "Une erreur est survenue"}), 500
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    try:
+        req = request.get_json(silent=True, force=True)
+        user_input = req.get('message').lower()
+        user_id = req.get('user_id', 'default')
+
+        # Initialisation du contexte si utilisateur non reconnu
+        if user_id not in user_context:
+            user_context[user_id] = {"stage": "start", "country": None, "preferences": None}
+
+        # Obtenir le contexte actuel de l'utilisateur
+        context = user_context[user_id]
+
+        # Gestion des réponses en fonction du contexte actuel
+        if context["stage"] == "start":
+            if re.search(r'\bbonjour|salut\b', user_input):
+                response = welcome_response()
+                context["stage"] = "awaiting_country"
+            else:
+                response = fallback_response()
+
+        elif context["stage"] == "awaiting_country":
+            if "pays" in user_input:
+                response = ask_country_response()
+                context["stage"] = "awaiting_country_input"
+            else:
+                response = fallback_response()
+
+        elif context["stage"] == "awaiting_country_input":
+            context["country"] = user_input
+            response = jsonify({"response": f"Vous avez choisi le pays : {user_input}. Avez-vous des préférences spécifiques (par exemple, plats traditionnels kabyles)?"})
+            context["stage"] = "awaiting_preferences"
+
+        elif context["stage"] == "awaiting_preferences":
+            context["preferences"] = user_input
+            response = jsonify({"response": f"Vous avez indiqué les préférences : {user_input}. Souhaitez-vous obtenir un itinéraire?"})
+            context["stage"] = "country_confirmed"
+
+        elif context["stage"] == "country_confirmed":
+            if re.search(r'\boui\b', user_input):
+                addresses = get_cultural_heritage_addresses(context["country"], context["preferences"])
+                if isinstance(addresses, list):
+                    response = jsonify({
+                        "response": "Chargement des adresses sur la carte...",
+                        "addresses": addresses,  # Transmettez les adresses au client
+                        "redirect_url": "/map"
+                    })
+                else:
+                    response = jsonify({"response": "Aucune adresse valide trouvée."})
+                user_context.pop(user_id, None)  # Réinitialiser le contexte
+            elif re.search(r'\bnon\b', user_input):
+                response = jsonify({"response": "D'accord, si vous avez d'autres questions, n'hésitez pas!"})
+                user_context.pop(user_id, None)  # Réinitialiser le contexte
+            else:
+                response = fallback_response()
+        else:
+            response = fallback_response()
+
+    except Exception as e:
+        response = jsonify({"response": f"Une erreur est survenue: {str(e)}"})
+
+    return response
+
+def welcome_response():
+    return jsonify({"response": "Bonjour! Où aimeriez-vous voyager? (Par exemple : indiquez un pays)"})
+
+def ask_country_response():
+    return jsonify({"response": "Quel pays souhaitez-vous visiter?"})
+
+def fallback_response():
+    return jsonify({"response": "Désolé, je n'ai pas compris. Pouvez-vous reformuler?"})
+
+def get_cultural_heritage_addresses(country, preferences):
+    try:
+        messages = [
+            {
+                "role": "user",
+                "content": f"Bonjour, Recommandez des adresses de patrimoine culturel pour {country} en sachant que le user aime {preferences}. Chaque objet dans la liste contient les champs nom, description, latitude, longitude."
+            }
+        ]
+        chat_response = client.chat.complete(
+            model=model,
+            messages=messages,
+            response_format={"type": "json_object"}
+        )
+        if chat_response.choices and chat_response.choices[0].message.content:
+            return json.loads(chat_response.choices[0].message.content)
+        else:
+            return []
+    except Exception as e:
+        return []
 
 if __name__ == '__main__':
     with app.app_context():
