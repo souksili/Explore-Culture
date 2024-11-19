@@ -354,10 +354,19 @@ def ajouter_historique():
 def recuperer_historique():
     try:
         utilisateur_id = get_jwt_identity()
+        logging.info(f"Utilisateur ID: {utilisateur_id}")
+
         historique = Historique.query.filter_by(utilisateur_id=utilisateur_id).order_by(Historique.date_ajout.desc()).all()
+        logging.info(f"Historique récupéré: {historique}")
+
         if not historique:
+            logging.info("Aucun historique trouvé pour cet utilisateur.")
             return jsonify([]), 200
-        return jsonify([item.to_dict() for item in historique]), 200
+
+        historique_dict = [item.to_dict() for item in historique]
+        logging.info(f"Historique converti en dictionnaire: {historique_dict}")
+
+        return jsonify(historique_dict), 200
     except Exception as e:
         logging.error(f"Erreur lors de la récupération de l'historique : {e}")
         return jsonify({"message": "Une erreur est survenue lors de la récupération de l'historique"}), 500
