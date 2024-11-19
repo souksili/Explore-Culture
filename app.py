@@ -259,7 +259,7 @@ def chat():
                     response = jsonify({
                         "response": "Chargement des adresses sur la carte...",
                         "addresses": addresses,  # Transmettez les adresses au client
-                        "redirect_url": "/map"
+                        "redirect_url": "/dashboard"
                     })
                 else:
                     response = jsonify({"response": "Aucune adresse valide trouvée."})
@@ -276,10 +276,6 @@ def chat():
         response = jsonify({"response": f"Une erreur est survenue: {str(e)}"})
 
     return response
-
-@app.route('/map', methods=['GET'])
-def display_map():
-    return render_template('map.html')
 
 def welcome_response():
     return jsonify({"response": "Bonjour! Où aimeriez-vous voyager? (Par exemple : indiquez un pays)"})
@@ -309,10 +305,6 @@ def get_cultural_heritage_addresses(country, preferences):
             return []
     except Exception as e:
         return []
-
-@app.route('/')
-def serve_index():
-    return render_template('map.html')
 
 if __name__ == '__main__':
     with app.app_context():
