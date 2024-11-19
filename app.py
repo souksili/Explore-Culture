@@ -13,8 +13,8 @@ from email.mime.multipart import MIMEMultipart
 from email.header import Header
 from email.utils import formataddr
 import unicodedata
-import json
 import re
+import json
 from flask_jwt_extended import jwt_required, unset_jwt_cookies
 from mistralai import Mistral
 
@@ -39,8 +39,6 @@ api_key = os.getenv('API_KEY')
 model = os.getenv('MODEL')
 
 client = Mistral(api_key=api_key)
-
-user_context = {}
 
 def remove_accents(input_str):
     return ''.join(
@@ -101,7 +99,7 @@ def send_email(recipient, subject, body):
         logging.error(f"Erreur lors de l'envoi de l'email : {e}")
         raise
 
-@app.route('/')
+@app.route('/test')
 def hello_world():
     return 'Hello, World!'
 
@@ -211,6 +209,10 @@ def handle_exception(e):
     logging.error(f"Erreur non capturée : {e}")
     return jsonify({"message": "Une erreur est survenue"}), 500
 
+
+
+user_context = {}
+
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
@@ -275,6 +277,10 @@ def chat():
 
     return response
 
+@app.route('/map', methods=['GET'])
+def display_map():
+    return render_template('map.html')
+
 def welcome_response():
     return jsonify({"response": "Bonjour! Où aimeriez-vous voyager? (Par exemple : indiquez un pays)"})
 
@@ -303,6 +309,10 @@ def get_cultural_heritage_addresses(country, preferences):
             return []
     except Exception as e:
         return []
+
+@app.route('/')
+def serve_index():
+    return render_template('map.html')
 
 if __name__ == '__main__':
     with app.app_context():
