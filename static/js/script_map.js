@@ -23,7 +23,7 @@ document.getElementById('burgerIcon').addEventListener('click', () => {
     menuContent.style.display = menuContent.style.display === 'flex' ? 'none' : 'flex';
 });
 
-const culturalAddresses = JSON.parse(localStorage.getItem('culturalAddresses')) || [];
+// Initialisation de la carte
 const map = L.map('map').setView([31.7917, -7.0926], 5);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -31,9 +31,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-if (culturalAddresses.length > 0) {
-    const waypoints = culturalAddresses.map(({ latitude, longitude, nom, description }, index) => {
-        const emoji = index === 0 ? '🏁' : index === culturalAddresses.length - 1 ? '🏁' : '📍';
+// Gestion des waypoints et de la navigation
+function initializeWaypoints(addresses) {
+    const waypoints = addresses.map(({ latitude, longitude, nom, description }, index) => {
+        const emoji = index === 0 ? '🏁' : index === addresses.length - 1 ? '🏁' : '📍';
         L.marker([latitude, longitude], { icon: L.divIcon({ className: 'emoji-marker', html: emoji }) })
             .addTo(map)
             .bindPopup(`<b>${nom}</b><br>${description || 'Aucune description'}`);
@@ -65,63 +66,48 @@ if (culturalAddresses.length > 0) {
             }, 50);
         });
 
-        // Afficher le modal
-        const showEndTripModal = () => {
-            const endTripModal = document.getElementById('endTripModal');
-            endTripModal.style.display = 'flex';
-        };
-
-        // Cacher le modal après fermeture
-        document.getElementById('closeModal').addEventListener('click', () => {
-            document.getElementById('endTripModal').style.display = 'none';
-        });
-
-        // Gestion des étoiles pour avis
-        const stars = document.querySelectorAll('.star');
-        let selectedRating = 0;
-
-        stars.forEach(star => {
-            star.addEventListener('click', () => {
-                stars.forEach(s => s.classList.remove('selected'));
-                star.classList.add('selected');
-                selectedRating = star.getAttribute('data-value');
-            });
-        });
-
-        // Soumettre la note
-        document.getElementById('submitRating').addEventListener('click', () => {
-            if (selectedRating > 0) {
-                alert(`Merci pour votre avis de ${selectedRating} étoiles !`);
-                document.getElementById('endTripModal').style.display = 'none';
-            } else {
-                alert('Veuillez sélectionner une note avant de soumettre.');
+        toggleInstructions.addEventListener('click', () => {
+            const routingContainer = document.querySelector('.leaflet-routing-container');
+            if (routingContainer) {
+                instructionsVisible = !instructionsVisible;
+                routingContainer.style.display = instructionsVisible ? 'block' : 'none';
+                toggleInstructions.textContent = instructionsVisible ? 'Masquer Instructions' : 'Afficher Instructions';
             }
         });
     });
+}
 
-    toggleInstructions.addEventListener('click', () => {
-        const routingContainer = document.querySelector('.leaflet-routing-container');
-        if (routingContainer) {
-            instructionsVisible = !instructionsVisible;
-            routingContainer.style.display = instructionsVisible ? 'block' : 'none';
-            toggleInstructions.textContent = instructionsVisible ? 'Masquer Instructions' : 'Afficher Instructions';
+// Modal de fin de trajet
+function showEndTripModal() {
+    const endTripModal = document.getElementById('endTripModal');
+    endTripModal.style.display = 'flex';
+
+    document.getElementById('closeModal').addEventListener('click', () => {
+        endTripModal.style.display = 'none';
+    });
+
+    const stars = document.querySelectorAll('.star');
+    let selectedRating = 0;
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            stars.forEach(s => s.classList.remove('selected'));
+            star.classList.add('selected');
+            selectedRating = star.getAttribute('data-value');
+        });
+    });
+
+    document.getElementById('submitRating').addEventListener('click', () => {
+        if (selectedRating > 0) {
+            alert(`Merci pour votre avis de ${selectedRating} étoiles !`);
+            endTripModal.style.display = 'none';
+        } else {
+            alert('Veuillez sélectionner une note avant de soumettre.');
         }
     });
 }
 
-document.getElementById('toggleChat').addEventListener('click', () => {
-    const chatContainer = document.getElementById('chatContainer');
-    const toggleChatButton = document.getElementById('toggleChat');
-
-    if (chatContainer.style.display === 'none') {
-        chatContainer.style.display = 'flex';
-        toggleChatButton.textContent = 'Masquer Chat';
-    } else {
-        chatContainer.style.display = 'none';
-        toggleChatButton.textContent = 'Afficher Chat';
-    }
-});
-
+// Gestion du chat et sauvegarde des adresses
 function sendMessage() {
     const userInput = document.getElementById('userInput');
     const message = userInput.value.trim();
@@ -140,31 +126,72 @@ function sendMessage() {
     .then(data => {
         chatBox.innerHTML += `<p><b>Assistant :</b> ${data.response}</p>`;
         if (data.addresses && Array.isArray(data.addresses)) {
-            localStorage.setItem('culturalAddresses', JSON.stringify(data.addresses));
+            saveHistoriqueToServer(data.addresses); // Sauvegarde dans la BDD
         }
         chatBox.scrollTop = chatBox.scrollHeight;
     })
     .catch(console.error);
 }
 
-let lastCulturalAddresses = localStorage.getItem('culturalAddresses');
-
-function checkLocalStorage() {
-    const currentCulturalAddresses = localStorage.getItem('culturalAddresses');
-    if (currentCulturalAddresses !== lastCulturalAddresses) {
-        lastCulturalAddresses = currentCulturalAddresses;
-        location.reload();
-    }
+// Sauvegarde des adresses dans la BDD
+function saveHistoriqueToServer(addresses) {
+    fetch('/api/historique', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify({ addresses })
+    })
+    .then(response => response.json())
+    .then(() => fetchHistoriqueFromServer()) // Rafraîchit l'historique après sauvegarde
+    .catch(console.error);
 }
 
-setInterval(checkLocalStorage, 500);
+// Récupération de l'historique depuis la BDD
+function fetchHistoriqueFromServer() {
+    fetch('/api/historique', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+    })
+    .then(response => response.json())
+    .then(historique => {
+        const historiqueList = document.getElementById('historiqueList');
+        historiqueList.innerHTML = '';
 
-window.addEventListener('storage', (event) => {
-    if (event.key === 'culturalAddresses') {
-        location.reload();
+        historique.forEach(address => {
+            const listItem = document.createElement('li');
+            listItem.textContent = address.nom;
+            listItem.addEventListener('click', () => {
+                map.setView([address.latitude, address.longitude], 15);
+                L.popup()
+                    .setLatLng([address.latitude, address.longitude])
+                    .setContent(`<b>${address.nom}</b><br>${address.description || 'Aucune description'}`)
+                    .openOn(map);
+            });
+            historiqueList.appendChild(listItem);
+        });
+    })
+    .catch(console.error);
+}
+
+// Gestion du bouton de chat
+document.getElementById('toggleChat').addEventListener('click', () => {
+    const chatContainer = document.getElementById('chatContainer');
+    const toggleChatButton = document.getElementById('toggleChat');
+
+    if (chatContainer.style.display === 'none') {
+        chatContainer.style.display = 'flex';
+        toggleChatButton.textContent = 'Masquer Chat';
+    } else {
+        chatContainer.style.display = 'none';
+        toggleChatButton.textContent = 'Afficher Chat';
     }
 });
 
+// Déconnexion
 document.getElementById('logoutLink').addEventListener('click', (event) => {
     event.preventDefault();
 
@@ -194,4 +221,9 @@ document.getElementById('logoutLink').addEventListener('click', (event) => {
         console.error('Erreur:', error);
         alert('Erreur lors de la déconnexion');
     });
+});
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+    fetchHistoriqueFromServer(); // Charger l'historique au démarrage
 });

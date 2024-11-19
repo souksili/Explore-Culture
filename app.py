@@ -15,7 +15,7 @@ from email.utils import formataddr
 import unicodedata
 import re
 import json
-from flask_jwt_extended import jwt_required, unset_jwt_cookies
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from mistralai import Mistral
 
 app = Flask(__name__)
@@ -68,6 +68,25 @@ class Profil(db.Model):
     bio = db.Column(db.String(500))
     date_creation = db.Column(db.DateTime, default=datetime.utcnow)
     date_modification = db.Column(db.DateTime, onupdate=datetime.utcnow)
+
+class Historique(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False)
+    nom = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+    date_ajout = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nom": self.nom,
+            "description": self.description,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "date_ajout": self.date_ajout.isoformat()
+        }
 
 def send_email(recipient, subject, body):
     try:
@@ -305,6 +324,41 @@ def get_cultural_heritage_addresses(country, preferences):
             return []
     except Exception as e:
         return []
+
+@app.route('/api/historique', methods=['POST'])
+@jwt_required()
+def ajouter_historique():
+    try:
+        data = request.get_json()
+        utilisateur_id = get_jwt_identity()
+        addresses = data.get('addresses', [])
+
+        for address in addresses:
+            historique = Historique(
+                utilisateur_id=utilisateur_id,
+                nom=address['nom'],
+                description=address.get('description'),
+                latitude=address['latitude'],
+                longitude=address['longitude']
+            )
+            db.session.add(historique)
+
+        db.session.commit()
+        return jsonify({"message": "Historique mis à jour."}), 201
+    except Exception as e:
+        logging.error(f"Erreur lors de l'ajout à l'historique : {e}")
+        return jsonify({"message": "Une erreur est survenue."}), 500
+
+@app.route('/api/historique', methods=['GET'])
+@jwt_required()
+def recuperer_historique():
+    try:
+        utilisateur_id = get_jwt_identity()
+        historique = Historique.query.filter_by(utilisateur_id=utilisateur_id).order_by(Historique.date_ajout.desc()).all()
+        return jsonify([item.to_dict() for item in historique]), 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération de l'historique : {e}")
+        return jsonify({"message": "Une erreur est survenue."}), 500
 
 if __name__ == '__main__':
     with app.app_context():
