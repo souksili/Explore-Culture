@@ -149,6 +149,7 @@ function saveHistoriqueToServer(addresses) {
 }
 
 // Récupération de l'historique depuis la BDD
+// Récupération de l'historique depuis la BDD
 function fetchHistoriqueFromServer() {
     fetch('/api/historique', {
         method: 'GET',
@@ -156,10 +157,24 @@ function fetchHistoriqueFromServer() {
             'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(historique => {
+        if (!Array.isArray(historique)) {
+            throw new TypeError('Le format de la réponse est incorrect.');
+        }
+
         const historiqueList = document.getElementById('historiqueList');
         historiqueList.innerHTML = '';
+
+        if (historique.length === 0) {
+            historiqueList.innerHTML = '<li>Aucun historique disponible</li>';
+            return;
+        }
 
         historique.forEach(address => {
             const listItem = document.createElement('li');
@@ -174,7 +189,11 @@ function fetchHistoriqueFromServer() {
             historiqueList.appendChild(listItem);
         });
     })
-    .catch(console.error);
+    .catch(error => {
+        console.error('Erreur lors de la récupération de l\'historique :', error);
+        const historiqueList = document.getElementById('historiqueList');
+        historiqueList.innerHTML = '<li>Erreur lors du chargement de l\'historique.</li>';
+    });
 }
 
 // Gestion du bouton de chat

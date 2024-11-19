@@ -355,10 +355,12 @@ def recuperer_historique():
     try:
         utilisateur_id = get_jwt_identity()
         historique = Historique.query.filter_by(utilisateur_id=utilisateur_id).order_by(Historique.date_ajout.desc()).all()
+        if not historique:
+            return jsonify([]), 200
         return jsonify([item.to_dict() for item in historique]), 200
     except Exception as e:
         logging.error(f"Erreur lors de la récupération de l'historique : {e}")
-        return jsonify({"message": "Une erreur est survenue."}), 500
+        return jsonify({"message": "Une erreur est survenue lors de la récupération de l'historique"}), 500
 
 if __name__ == '__main__':
     with app.app_context():
