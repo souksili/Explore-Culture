@@ -23,9 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('historiqueButton').addEventListener('click', () => {
-        const historiqueContainer = document.getElementById('historiqueContainer');
-        historiqueContainer.style.display = historiqueContainer.style.display === 'flex' ? 'none' : 'flex';
+        const historiqueModal = document.getElementById('historiqueModal');
+        historiqueModal.style.display = 'flex';
         fetchHistoriqueFromServer();
+    });
+
+    document.getElementById('closeHistoriqueModal').addEventListener('click', () => {
+        const historiqueModal = document.getElementById('historiqueModal');
+        historiqueModal.style.display = 'none';
     });
 
     // Initialisation de la carte
@@ -265,5 +270,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initialisation
-    fetchHistoriqueFromServer(); // Charger l'historique au démarrage
+    fetchHistoriqueFromServer();
 });

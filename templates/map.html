@@ -35,10 +35,6 @@
                 <button id="startButton" disabled><i class="fas fa-play-circle"></i> Lancer le trajet</button>
                 <button id="toggleInstructions"><i class="fas fa-info-circle"></i> Masquer Instructions</button>
             </div>
-            <div id="historiqueContainer" style="display: none;">
-                <h2>Historique des Adresses</h2>
-                <ul id="historiqueList"></ul>
-            </div>
         </div>
         <div id="chatContainer">
             <div id="chatBox">
@@ -48,6 +44,13 @@
                 <input type="text" id="userInput" placeholder="Écrivez ici...">
                 <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i> Envoyer</button>
             </div>
+        </div>
+    </div>
+    <div id="historiqueModal" class="modal">
+        <div class="modal-content">
+            <span id="closeHistoriqueModal" class="close">&times;</span>
+            <h2>Historique des Adresses</h2>
+            <ul id="historiqueList"></ul>
         </div>
     </div>
     <div id="endTripModal" class="modal">
