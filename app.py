@@ -385,7 +385,20 @@ def recuperer_historique():
             logging.info("Aucun historique trouvé pour cet utilisateur.")
             return jsonify([]), 200
 
-        historique_dict = [item.to_dict() for item in historique]
+        historique_dict = []
+        for item in historique:
+            item_dict = item.to_dict()
+            if not isinstance(item_dict.get('nom'), str):
+                logging.error("Le nom doit être une chaîne de caractères")
+                return jsonify({"message": "Le nom doit être une chaîne de caractères"}), 400
+            if not isinstance(item_dict.get('latitude'), (int, float)):
+                logging.error("La latitude doit être un nombre")
+                return jsonify({"message": "La latitude doit être un nombre"}), 400
+            if not isinstance(item_dict.get('longitude'), (int, float)):
+                logging.error("La longitude doit être un nombre")
+                return jsonify({"message": "La longitude doit être un nombre"}), 400
+            historique_dict.append(item_dict)
+
         logging.info(f"Historique converti en dictionnaire: {historique_dict}")
 
         return jsonify(historique_dict), 200
