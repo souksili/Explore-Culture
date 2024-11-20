@@ -117,47 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Gestion du chat et sauvegarde des adresses
-    function sendMessage() {
-        const userInput = document.getElementById('userInput');
-        const message = userInput.value.trim();
-        if (!message) return;
-
-        const chatBox = document.getElementById('chatBox');
-        chatBox.innerHTML += `<p><b>Vous :</b> ${message}</p>`;
-        userInput.value = '';
-
-        fetch('/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message })
-        })
-        .then(response => response.json())
-        .then(data => {
-            chatBox.innerHTML += `<p><b>Assistant :</b> ${data.response}</p>`;
-            if (data.addresses && Array.isArray(data.addresses)) {
-                saveHistoriqueToServer(data.addresses); // Sauvegarde dans la BDD
-            }
-            chatBox.scrollTop = chatBox.scrollHeight;
-        })
-        .catch(console.error);
-    }
-
-    // Sauvegarde des adresses dans la BDD
-    function saveHistoriqueToServer(addresses) {
-        fetch('/api/historique', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-            },
-            body: JSON.stringify({ addresses })
-        })
-        .then(response => response.json())
-        .then(() => fetchHistoriqueFromServer()) // Rafraîchit l'historique après sauvegarde
-        .catch(console.error);
-    }
-
     // Récupération de l'historique depuis la BDD
     function fetchHistoriqueFromServer() {
         const accessToken = localStorage.getItem('accessToken');
@@ -272,3 +231,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialisation
     fetchHistoriqueFromServer();
 });
+
+// Sauvegarde des adresses dans la BDD
+function saveHistoriqueToServer(addresses) {
+    fetch('/api/historique', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify({ addresses })
+    })
+    .then(response => response.json())
+    .then(() => fetchHistoriqueFromServer()) // Rafraîchit l'historique après sauvegarde
+    .catch(console.error);
+}
+
+// Gestion du chat et sauvegarde des adresses
+function sendMessage() {
+    const userInput = document.getElementById('userInput');
+    const message = userInput.value.trim();
+    if (!message) return;
+
+    const chatBox = document.getElementById('chatBox');
+    chatBox.innerHTML += `<p><b>Vous :</b> ${message}</p>`;
+    userInput.value = '';
+
+    fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+    })
+    .then(response => response.json())
+    .then(data => {
+        chatBox.innerHTML += `<p><b>Assistant :</b> ${data.response}</p>`;
+        if (data.addresses && Array.isArray(data.addresses)) {
+            saveHistoriqueToServer(data.addresses); // Sauvegarde dans la BDD
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+    })
+    .catch(console.error);
+}
