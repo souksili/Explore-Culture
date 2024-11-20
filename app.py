@@ -377,16 +377,10 @@ def ajouter_historique():
 def recuperer_historique():
     try:
         logging.info("Route /api/historique (GET) appelée")
-        utilisateur_id = get_jwt_identity()
+        utilisateur_id = str(get_jwt_identity())
         logging.info(f"Utilisateur ID: {utilisateur_id}")
 
-        # Vérifiez que l'utilisateur_id est une chaîne de caractères
-        if not isinstance(utilisateur_id, str):
-            raise ValueError("utilisateur_id must be a string")
-
         historique = Historique.query.filter_by(utilisateur_id=utilisateur_id).order_by(Historique.date_ajout.desc()).all()
-        logging.info(f"Historique récupéré: {historique}")
-
         if not historique:
             logging.info("Aucun historique trouvé pour cet utilisateur.")
             return jsonify([]), 200
