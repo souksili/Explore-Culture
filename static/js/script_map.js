@@ -271,7 +271,12 @@ function sendMessage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(data => {
         chatBox.innerHTML += `<p><b>Assistant :</b> ${data.response}</p>`;
         if (data.addresses && Array.isArray(data.addresses)) {
@@ -280,7 +285,10 @@ function sendMessage() {
         }
         chatBox.scrollTop = chatBox.scrollHeight;
     })
-    .catch(console.error);
+    .catch(error => {
+        console.error('Erreur lors de l\'envoi du message :', error);
+        chatBox.innerHTML += `<p><b>Assistant :</b> Une erreur est survenue.</p>`;
+    });
 }
 
 // Initialisation
