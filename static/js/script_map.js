@@ -149,12 +149,18 @@ function saveHistoriqueToServer(addresses) {
 }
 
 // Récupération de l'historique depuis la BDD
-// Récupération de l'historique depuis la BDD
 function fetchHistoriqueFromServer() {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+        console.error('Access token is missing');
+        return;
+    }
+
     fetch('/api/historique', {
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
         }
     })
     .then(response => {
