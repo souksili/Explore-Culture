@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-
 document.getElementById('burgerIcon').addEventListener('click', () => {
     const menuContent = document.getElementById('menuContent');
     menuContent.style.display = menuContent.style.display === 'flex' ? 'none' : 'flex';
@@ -43,8 +42,20 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
+let routeControl;
+
 // Gestion des waypoints et de la navigation
 function initializeWaypoints(addresses) {
+    // Supprimer les itinéraires précédents
+    if (routeControl) {
+        map.removeControl(routeControl);
+        map.eachLayer(layer => {
+            if (layer instanceof L.Marker || layer instanceof L.Routing.Line) {
+                map.removeLayer(layer);
+            }
+        });
+    }
+
     const waypoints = addresses.map(({ latitude, longitude, nom, description }, index) => {
         const emoji = index === 0 ? '🏁' : index === addresses.length - 1 ? '🏁' : '📍';
         L.marker([latitude, longitude], { icon: L.divIcon({ className: 'emoji-marker', html: emoji }) })
@@ -53,7 +64,7 @@ function initializeWaypoints(addresses) {
         return L.latLng(latitude, longitude);
     });
 
-    const routeControl = L.Routing.control({ waypoints, createMarker: () => null }).addTo(map);
+    routeControl = L.Routing.control({ waypoints, createMarker: () => null }).addTo(map);
 
     const animatedMarker = L.marker([0, 0], { icon: L.divIcon({ className: 'emoji-marker', html: '🚗' }) }).addTo(map);
     const startButton = document.getElementById('startButton');
@@ -265,6 +276,7 @@ function sendMessage() {
         chatBox.innerHTML += `<p><b>Assistant :</b> ${data.response}</p>`;
         if (data.addresses && Array.isArray(data.addresses)) {
             saveHistoriqueToServer(data.addresses); // Sauvegarde dans la BDD
+            initializeWaypoints(data.addresses); // Initialise l'itinéraire sur la carte
         }
         chatBox.scrollTop = chatBox.scrollHeight;
     })
