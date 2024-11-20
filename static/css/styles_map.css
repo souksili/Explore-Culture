@@ -332,21 +332,24 @@ button:hover {
     background-color: #f0f0f0;
 }
 
-/* Delete Button Styles */
-#historiqueList li button {
+/* Historique Button Styles */
+.historique-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
     background: linear-gradient(to right, #ff5722, #ff9800);
     border: none;
-    border-radius: 5px;
-    padding: 5px 10px;
+    border-radius: 50%;
+    padding: 10px;
     color: #fff;
     cursor: pointer;
-    margin-left: 10px;
-    transition: background 0.3s ease;
+    transition: 0.3s ease;
+    z-index: 1000;
 }
 
-#historiqueList li button:hover {
+.historique-button:hover {
     background: linear-gradient(to right, #ff9800, #ff5722);
-    transform: scale(1.05);
+    transform: scale(1.1);
 }
 
 /* Confirm Delete Modal Styles */
