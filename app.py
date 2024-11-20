@@ -118,7 +118,7 @@ def send_email(recipient, subject, body):
         logging.error(f"Erreur lors de l'envoi de l'email : {e}")
         raise
 
-@app.route('/test')
+@app.route('/')
 def hello_world():
     logging.info("Route /test appelée")
     return 'Hello, World!'
