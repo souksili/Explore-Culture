@@ -153,22 +153,22 @@ function fetchHistoriqueFromServer() {
             return;
         }
 
-        // Regrouper les adresses par identifiant historique
+        // Regrouper les adresses par group_id
         const groupedHistorique = historique.reduce((acc, address) => {
-            if (!acc[address.historiqueId]) {
-                acc[address.historiqueId] = [];
+            if (!acc[address.group_id]) {
+                acc[address.group_id] = [];
             }
-            acc[address.historiqueId].push(address);
+            acc[address.group_id].push(address);
             return acc;
         }, {});
 
         // Créer des liens cliquables pour chaque groupe d'adresses
-        for (const historiqueId in groupedHistorique) {
-            const addresses = groupedHistorique[historiqueId];
+        for (const group_id in groupedHistorique) {
+            const addresses = groupedHistorique[group_id];
             const listItem = document.createElement('li');
             const link = document.createElement('a');
             link.href = '#';
-            link.textContent = `Itinéraire ${historiqueId}`;
+            link.textContent = `Itinéraire ${group_id}`;
             link.addEventListener('click', (event) => {
                 event.preventDefault();
                 initializeWaypoints(addresses);

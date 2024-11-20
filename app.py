@@ -77,6 +77,7 @@ class Historique(db.Model):
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
     date_ajout = db.Column(db.DateTime, default=datetime.utcnow)
+    group_id = db.Column(db.String(50), nullable=True)
 
     def to_dict(self):
         return {
@@ -85,7 +86,8 @@ class Historique(db.Model):
             "description": self.description,
             "latitude": self.latitude,
             "longitude": self.longitude,
-            "date_ajout": self.date_ajout.isoformat()
+            "date_ajout": self.date_ajout.isoformat(),
+            "group_id": self.group_id
         }
 
 def send_email(recipient, subject, body):
@@ -346,6 +348,8 @@ def get_cultural_heritage_addresses(country, preferences):
         logging.error(f"Erreur lors de la récupération des adresses de patrimoine culturel : {e}")
         return []
 
+import uuid
+
 @app.route('/api/historique', methods=['POST'])
 @jwt_required()
 def ajouter_historique():
@@ -355,13 +359,16 @@ def ajouter_historique():
         utilisateur_id = get_jwt_identity()
         addresses = data.get('addresses', [])
 
+        group_id = str(uuid.uuid4())
+
         for address in addresses:
             historique = Historique(
                 utilisateur_id=utilisateur_id,
                 nom=address['nom'],
                 description=address.get('description'),
                 latitude=address['latitude'],
-                longitude=address['longitude']
+                longitude=address['longitude'],
+                group_id=group_id
             )
             db.session.add(historique)
 
