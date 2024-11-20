@@ -346,6 +346,32 @@ def get_cultural_heritage_addresses(country, preferences):
         logging.error(f"Erreur lors de la récupération des adresses de patrimoine culturel : {e}")
         return []
 
+@app.route('/api/historique', methods=['POST'])
+@jwt_required()
+def ajouter_historique():
+    try:
+        logging.info("Route /api/historique (POST) appelée")
+        data = request.get_json()
+        utilisateur_id = get_jwt_identity()
+        addresses = data.get('addresses', [])
+
+        for address in addresses:
+            historique = Historique(
+                utilisateur_id=utilisateur_id,
+                nom=address['nom'],
+                description=address.get('description'),
+                latitude=address['latitude'],
+                longitude=address['longitude']
+            )
+            db.session.add(historique)
+
+        db.session.commit()
+        logging.info(f"Historique mis à jour pour l'utilisateur {utilisateur_id}")
+        return jsonify({"message": "Historique mis à jour."}), 201
+    except Exception as e:
+        logging.error(f"Erreur lors de l'ajout à l'historique : {e}")
+        return jsonify({"message": "Une erreur est survenue."}), 500
+
 @app.route('/api/historique', methods=['GET'])
 @jwt_required()
 def recuperer_historique():
@@ -357,29 +383,6 @@ def recuperer_historique():
         # Vérifiez que l'utilisateur_id est une chaîne de caractères
         if not isinstance(utilisateur_id, str):
             raise ValueError("utilisateur_id must be a string")
-
-        historique = Historique.query.filter_by(utilisateur_id=utilisateur_id).order_by(Historique.date_ajout.desc()).all()
-        logging.info(f"Historique récupéré: {historique}")
-
-        if not historique:
-            logging.info("Aucun historique trouvé pour cet utilisateur.")
-            return jsonify([]), 200
-
-        historique_dict = [item.to_dict() for item in historique]
-        logging.info(f"Historique converti en dictionnaire: {historique_dict}")
-
-        return jsonify(historique_dict), 200
-    except Exception as e:
-        logging.error(f"Erreur lors de la récupération de l'historique : {e}")
-        return jsonify({"message": "Une erreur est survenue lors de la récupération de l'historique"}), 500
-
-@app.route('/api/historique', methods=['GET'])
-@jwt_required()
-def recuperer_historique():
-    try:
-        logging.info("Route /api/historique (GET) appelée")
-        utilisateur_id = get_jwt_identity()
-        logging.info(f"Utilisateur ID: {utilisateur_id}")
 
         historique = Historique.query.filter_by(utilisateur_id=utilisateur_id).order_by(Historique.date_ajout.desc()).all()
         logging.info(f"Historique récupéré: {historique}")
