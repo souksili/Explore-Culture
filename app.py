@@ -413,6 +413,22 @@ def recuperer_historique():
         logging.error(f"Erreur lors de la récupération de l'historique : {e}")
         return jsonify({"message": "Une erreur est survenue lors de la récupération de l'historique"}), 500
 
+@app.route('/api/historique/<group_id>', methods=['DELETE'])
+@jwt_required()
+def supprimer_historique(group_id):
+    try:
+        logging.info(f"Route /api/historique/{group_id} (DELETE) appelée")
+        utilisateur_id = get_jwt_identity()
+
+        Historique.query.filter_by(utilisateur_id=utilisateur_id, group_id=group_id).delete()
+        db.session.commit()
+
+        logging.info(f"Itinéraire {group_id} supprimé pour l'utilisateur {utilisateur_id}")
+        return jsonify({"message": "Itinéraire supprimé."}), 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la suppression de l'itinéraire : {e}")
+        return jsonify({"message": "Une erreur est survenue."}), 500
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

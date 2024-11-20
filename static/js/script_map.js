@@ -34,6 +34,23 @@ document.getElementById('closeHistoriqueModal').addEventListener('click', () => 
     historiqueModal.style.display = 'none';
 });
 
+document.getElementById('closeConfirmDeleteModal').addEventListener('click', () => {
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    confirmDeleteModal.style.display = 'none';
+});
+
+document.getElementById('cancelDeleteButton').addEventListener('click', () => {
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    confirmDeleteModal.style.display = 'none';
+});
+
+document.getElementById('confirmDeleteButton').addEventListener('click', () => {
+    const groupId = document.getElementById('confirmDeleteButton').getAttribute('data-group-id');
+    deleteItinerary(groupId);
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    confirmDeleteModal.style.display = 'none';
+});
+
 // Initialisation de la carte
 const map = L.map('map').setView([31.7917, -7.0926], 5);
 
@@ -185,6 +202,14 @@ function fetchHistoriqueFromServer() {
                 initializeWaypoints(addresses);
             });
             listItem.appendChild(link);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Supprimer';
+            deleteButton.addEventListener('click', () => {
+                showConfirmDeleteModal(group_id);
+            });
+            listItem.appendChild(deleteButton);
+
             historiqueList.appendChild(listItem);
         }
     })
@@ -192,6 +217,40 @@ function fetchHistoriqueFromServer() {
         console.error('Erreur lors de la récupération de l\'historique :', error);
         const historiqueList = document.getElementById('historiqueList');
         historiqueList.innerHTML = '<li>Erreur lors du chargement de l\'historique.</li>';
+    });
+}
+
+function showConfirmDeleteModal(groupId) {
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    confirmDeleteModal.style.display = 'flex';
+    document.getElementById('confirmDeleteButton').setAttribute('data-group-id', groupId);
+}
+
+function deleteItinerary(groupId) {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+        console.error('Access token is missing');
+        return;
+    }
+
+    fetch(`/api/historique/${groupId}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(() => {
+        fetchHistoriqueFromServer();
+    })
+    .catch(error => {
+        console.error('Erreur lors de la suppression de l\'itinéraire :', error);
     });
 }
 

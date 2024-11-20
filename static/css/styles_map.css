@@ -332,22 +332,71 @@ button:hover {
     background-color: #f0f0f0;
 }
 
-/* Historique Button Styles */
-.historique-button {
-    position: absolute;
-    top: 20px;
-    left: 20px;
+/* Delete Button Styles */
+#historiqueList li button {
     background: linear-gradient(to right, #ff5722, #ff9800);
     border: none;
-    border-radius: 50%;
-    padding: 10px;
+    border-radius: 5px;
+    padding: 5px 10px;
     color: #fff;
     cursor: pointer;
-    transition: 0.3s ease;
-    z-index: 1000;
+    margin-left: 10px;
+    transition: background 0.3s ease;
 }
 
-.historique-button:hover {
+#historiqueList li button:hover {
     background: linear-gradient(to right, #ff9800, #ff5722);
-    transform: scale(1.1);
+    transform: scale(1.05);
+}
+
+/* Confirm Delete Modal Styles */
+#confirmDeleteModal .modal-content {
+    background-color: #fff;
+    color: #000;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+#confirmDeleteModal .modal-content h2 {
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+#confirmDeleteModal .modal-content p {
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+
+#confirmDeleteModal .modal-content button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+#confirmDeleteButton {
+    background: linear-gradient(to right, #ff5722, #ff9800);
+    color: #fff;
+}
+
+#confirmDeleteButton:hover {
+    background: linear-gradient(to right, #ff9800, #ff5722);
+    transform: scale(1.05);
+}
+
+#cancelDeleteButton {
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: #fff;
+}
+
+#cancelDeleteButton:hover {
+    background: linear-gradient(to right, #2575fc, #6a11cb);
+    transform: scale(1.05);
 }
