@@ -182,18 +182,29 @@ function fetchHistoriqueFromServer() {
             return;
         }
 
-        historique.forEach(address => {
+        // Regrouper les adresses par identifiant historique
+        const groupedHistorique = historique.reduce((acc, address) => {
+            if (!acc[address.historiqueId]) {
+                acc[address.historiqueId] = [];
+            }
+            acc[address.historiqueId].push(address);
+            return acc;
+        }, {});
+
+        // Créer des liens cliquables pour chaque groupe d'adresses
+        for (const historiqueId in groupedHistorique) {
+            const addresses = groupedHistorique[historiqueId];
             const listItem = document.createElement('li');
-            listItem.textContent = address.nom;
-            listItem.addEventListener('click', () => {
-                map.setView([address.latitude, address.longitude], 15);
-                L.popup()
-                    .setLatLng([address.latitude, address.longitude])
-                    .setContent(`<b>${address.nom}</b><br>${address.description || 'Aucune description'}`)
-                    .openOn(map);
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = `Itinéraire ${historiqueId}`;
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                initializeWaypoints(addresses);
             });
+            listItem.appendChild(link);
             historiqueList.appendChild(listItem);
-        });
+        }
     })
     .catch(error => {
         console.error('Erreur lors de la récupération de l\'historique :', error);
