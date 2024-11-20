@@ -352,6 +352,23 @@ button:hover {
     transform: scale(1.1);
 }
 
+/* Delete Button Styles */
+#historiqueList li button {
+    background: linear-gradient(to right, #ff5722, #ff9800);
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    color: #fff;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: background 0.3s ease;
+}
+
+#historiqueList li button:hover {
+    background: linear-gradient(to right, #ff9800, #ff5722);
+    transform: scale(1.05);
+}
+
 /* Confirm Delete Modal Styles */
 #confirmDeleteModal .modal-content {
     background-color: #fff;
