@@ -145,6 +145,11 @@ def dashboard_page():
     logging.info("Route /dashboard appelée")
     return render_template('map.html')
 
+@app.route('/editer_profil', methods=['GET'])
+def dashboard_page():
+    logging.info("Route /editer_profil appelée")
+    return render_template('editer_profil.html')
+
 @app.route('/inscription', methods=['POST'])
 def inscription():
     try:
@@ -256,14 +261,11 @@ def chat():
         user_input = req.get('message').lower()
         user_id = req.get('user_id', 'default')
 
-        # Initialisation du contexte si utilisateur non reconnu
         if user_id not in user_context:
             user_context[user_id] = {"stage": "start", "country": None, "preferences": None}
 
-        # Obtenir le contexte actuel de l'utilisateur
         context = user_context[user_id]
 
-        # Gestion des réponses en fonction du contexte actuel
         if context["stage"] == "start":
             if re.search(r'\bbonjour|salut\b', user_input):
                 response = welcome_response()
@@ -428,6 +430,47 @@ def supprimer_historique(group_id):
     except Exception as e:
         logging.error(f"Erreur lors de la suppression de l'itinéraire : {e}")
         return jsonify({"message": "Une erreur est survenue."}), 500
+
+@app.route('/editer_profil', methods=['POST'])
+@jwt_required()
+def editer_profil():
+    try:
+        logging.info("Route /editer_profil (POST) appelée")
+        utilisateur_id = get_jwt_identity()
+        data = request.get_json()
+
+        prenom = data.get('prenom')
+        nom_complet = data.get('nom_complet')
+        photo_url = data.get('photo_url')
+        langue = data.get('langue')
+        localisation = data.get('localisation')
+        bio = data.get('bio')
+
+        profil = Profil.query.filter_by(utilisateur_id=utilisateur_id).first()
+        if not profil:
+            profil = Profil(utilisateur_id=utilisateur_id)
+
+        if prenom:
+            profil.prenom = prenom
+        if nom_complet:
+            profil.nom_complet = nom_complet
+        if photo_url:
+            profil.photo_url = photo_url
+        if langue:
+            profil.langue = langue
+        if localisation:
+            profil.localisation = localisation
+        if bio:
+            profil.bio = bio
+
+        db.session.add(profil)
+        db.session.commit()
+
+        logging.info(f"Profil mis à jour pour l'utilisateur {utilisateur_id}")
+        return jsonify({"message": "Profil mis à jour."}), 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la mise à jour du profil : {e}")
+        return jsonify({"message": "Une erreur est survenue lors de la mise à jour du profil"}), 500
 
 if __name__ == '__main__':
     with app.app_context():

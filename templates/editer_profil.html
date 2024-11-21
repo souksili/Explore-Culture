@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Éditer Profil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_map.css') }}">
+    <script src="{{ url_for('static', filename='js/edit_profile.js') }}" defer></script>
+</head>
+<body>
+    <div class="burger-menu">
+        <div class="burger-icon" id="burgerIcon">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <div class="menu-content" id="menuContent">
+            <a href="#" class="menu-item">Éditer profil</a>
+            <a href="#" class="menu-item" id="logoutLink">Déconnexion</a>
+        </div>
+    </div>
+    <h1>Éditer Profil</h1>
+    <form id="editProfileForm">
+        <label for="prenom">Prénom:</label>
+        <input type="text" id="prenom" name="prenom"><br><br>
+
+        <label for="nom_complet">Nom Complet:</label>
+        <input type="text" id="nom_complet" name="nom_complet"><br><br>
+
+        <label for="photo_url">URL de la Photo:</label>
+        <input type="text" id="photo_url" name="photo_url"><br><br>
+
+        <label for="langue">Langue:</label>
+        <input type="text" id="langue" name="langue"><br><br>
+
+        <label for="localisation">Localisation:</label>
+        <input type="text" id="localisation" name="localisation"><br><br>
+
+        <label for="bio">Bio:</label>
+        <textarea id="bio" name="bio"></textarea><br><br>
+
+        <button type="button" onclick="submitProfileForm()">Soumettre</button>
+    </form>
+</body>
+</html>
