@@ -1,0 +1,123 @@
+/* Global Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to bottom, #1e3c72, #2a5298);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+h1 {
+    text-align: center;
+    color: #f8f9fa;
+    margin: 20px 0;
+    font-size: 2rem;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Form Styles */
+form {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    margin: 20px auto;
+    max-width: 600px;
+    width: 100%;
+}
+
+form label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1.2rem;
+    color: #f8f9fa;
+}
+
+form input, form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 1rem;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+form input:focus, form textarea:focus {
+    outline: none;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4);
+}
+
+form button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: linear-gradient(to right, #ff5722, #ff9800);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+form button:hover {
+    background: linear-gradient(to right, #ff9800, #ff5722);
+    transform: scale(1.05);
+}
+
+/* Burger Menu Styles */
+.burger-menu {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.burger-icon {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.burger-icon .bar {
+    width: 25px;
+    height: 3px;
+    background-color: #fff;
+    margin: 4px 0;
+    transition: 0.3s;
+}
+
+.menu-content {
+    display: none;
+    flex-direction: column;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    position: absolute;
+    top: 40px;
+    right: 0;
+    z-index: 1000;
+}
+
+.menu-content .menu-item {
+    color: #000;
+    text-decoration: none;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    transition: 0.3s;
+}
+
+.menu-content .menu-item:last-child {
+    border-bottom: none;
+}
+
+.menu-content .menu-item:hover {
+    background-color: #f0f0f0;
+}
