@@ -146,7 +146,7 @@ def dashboard_page():
     return render_template('map.html')
 
 @app.route('/editer_profil', methods=['GET'])
-def dashboard_page():
+def editer_profil_page():
     logging.info("Route /editer_profil appelée")
     return render_template('editer_profil.html')
 
