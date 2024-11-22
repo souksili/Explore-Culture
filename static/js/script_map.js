@@ -55,8 +55,11 @@ document.getElementById('confirmDeleteButton').addEventListener('click', () => {
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhZjVkZDRjNC05M2JkLTQ3MmYtYjFhMS1lZjlmYjdlNDZhZDAiLCJpZCI6MjU3MzczLCJpYXQiOjE3MzIzMTI5Mjd9.BaKdEdIFKNov8EiF5DhI-yAVOrfdOWhAcZuT60PmGhA'; // Remplacez par votre token d'accès
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
-    terrainProvider: Cesium.createWorldTerrain(),
-    imageryProvider: Cesium.IonImageryProvider.fromUrl('https://api.cesium.com/v1/assets/1/endpoint'), // Utilisez un URL valide
+    terrainProvider: Cesium.createWorldTerrain({
+        requestVertexNormals: true,
+        requestWaterMask: true
+    }),
+    imageryProvider: new Cesium.IonImageryProvider({ assetId: 1 }), // Utilisez un asset ID valide
     baseLayerPicker: false,
     geocoder: false,
     homeButton: false,
