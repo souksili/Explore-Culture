@@ -56,7 +56,7 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
     terrainProvider: Cesium.createWorldTerrain(),
-    imageryProvider: Cesium.IonImageryProvider.fromAssetId(1), // Utilisez un asset ID valide
+    imageryProvider: Cesium.IonImageryProvider.fromUrl('https://api.cesium.com/v1/assets/1/endpoint'), // Utilisez un URL valide
     baseLayerPicker: false,
     geocoder: false,
     homeButton: false,
