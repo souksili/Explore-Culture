@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 document.addEventListener('DOMContentLoaded', () => {
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) {
@@ -93,7 +95,7 @@ function initializeWaypoints(addresses) {
         const routeCoordinates = routes[0].coordinates;
         startButton.disabled = routeCoordinates.length === 0;
 
-        startButton.addEventListener('click', () => {
+        startButton.addEventListener('click', async () => {
             let index = 0;
             const interval = setInterval(() => {
                 if (index < routeCoordinates.length) {
@@ -104,6 +106,10 @@ function initializeWaypoints(addresses) {
                     showEndTripModal();
                 }
             }, 50);
+
+            // Déclencher la musique en fonction de l'itinéraire
+            const country = await getCountryFromCoordinates(addresses[0].latitude, addresses[0].longitude);
+            playMusicBasedOnCountry(country);
         });
 
         toggleInstructions.addEventListener('click', () => {
@@ -352,3 +358,78 @@ function sendMessage() {
 
 // Initialisation
 fetchHistoriqueFromServer();
+
+// Fonction pour obtenir le pays à partir des coordonnées
+async function getCountryFromCoordinates(latitude, longitude) {
+    const apiKey = process.env.OPENCAGE_API_KEY;
+    const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${apiKey}`);
+    const data = await response.json();
+
+    if (data.results && data.results.length > 0) {
+        const components = data.results[0].components;
+        return components.country_code;
+    }
+
+    return null;
+}
+
+// Fonction pour obtenir un token d'accès Spotify
+async function getSpotifyAccessToken() {
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+    const authString = btoa(`${clientId}:${clientSecret}`);
+
+    const response = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Basic ${authString}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'grant_type=client_credentials'
+    });
+
+    const data = await response.json();
+    return data.access_token;
+}
+
+// Fonction pour rechercher des playlists en fonction du pays
+async function getSpotifyPlaylistByCountry(country) {
+    const spotifyToken = await getSpotifyAccessToken();
+    const response = await fetch(`https://api.spotify.com/v1/search?q=playlist+country:${country}&type=playlist&limit=1`, {
+        headers: {
+            'Authorization': `Bearer ${spotifyToken}`
+        }
+    });
+
+    const data = await response.json();
+    if (data.playlists && data.playlists.items && data.playlists.items.length > 0) {
+        return data.playlists.items[0].id;
+    }
+
+    return null;
+}
+
+// Fonction pour jouer de la musique en fonction du pays
+async function playMusicBasedOnCountry(country) {
+    const spotifyToken = await getSpotifyAccessToken();
+    const playlistId = await getSpotifyPlaylistByCountry(country);
+
+    if (playlistId) {
+        const response = await fetch(`https://api.spotify.com/v1/me/player/play`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${spotifyToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                context_uri: `spotify:playlist:${playlistId}`
+            })
+        });
+
+        if (!response.ok) {
+            console.error('Erreur lors de la lecture de la musique :', await response.json());
+        }
+    } else {
+        console.error('Aucune playlist trouvée pour le pays :', country);
+    }
+}
