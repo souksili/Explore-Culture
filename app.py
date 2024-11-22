@@ -15,6 +15,7 @@ from email.utils import formataddr
 import unicodedata
 import re
 import json
+import requests
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from mistralai import Mistral
 
@@ -29,9 +30,8 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('SMTP_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('SMTP_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('SMTP_USERNAME')
+LASTFM_API_KEY = os.getenv('LASTFM_API_KEY')
 OPENCAGE_API_KEY = os.getenv('OPENCAGE_API_KEY')
-SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
-SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -475,12 +475,22 @@ def editer_profil():
         logging.error(f"Erreur lors de la mise à jour du profil : {e}")
         return jsonify({"message": "Une erreur est survenue lors de la mise à jour du profil"}), 500
 
+@app.route('/api/lastfm/recommendations/<country>', methods=['GET'])
+def get_music_recommendations(country):
+    try:
+        logging.info(f"Route /api/lastfm/recommendations/{country} appelée")
+        response = requests.get(f"http://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country={country}&api_key={LASTFM_API_KEY}&format=json")
+        data = response.json()
+        return jsonify(data['tracks']['track']), 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération des recommandations musicales : {e}")
+        return jsonify({"message": "Une erreur est survenue lors de la récupération des recommandations musicales"}), 500
+
 @app.route('/api/keys', methods=['GET'])
 def get_api_keys():
     return jsonify({
         'opencageApiKey': OPENCAGE_API_KEY,
-        'spotifyClientId': SPOTIFY_CLIENT_ID,
-        'spotifyClientSecret': SPOTIFY_CLIENT_SECRET
+        'lastfmApiKey': LASTFM_API_KEY
     })
 
 if __name__ == '__main__':
