@@ -479,9 +479,17 @@ def editer_profil():
 def get_music_recommendations(country):
     try:
         logging.info(f"Route /api/lastfm/recommendations/{country} appelée")
+        logging.info(f"LASTFM_API_KEY: {LASTFM_API_KEY}")  # Ajoutez ce log
         response = requests.get(f"http://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country={country}&api_key={LASTFM_API_KEY}&format=json")
+        logging.info(f"Response status code: {response.status_code}")  # Ajoutez ce log
+        logging.info(f"Response content: {response.content}")  # Ajoutez ce log
+        if response.status_code != 200:
+            raise ValueError(f"Erreur lors de la récupération des recommandations musicales : {response.content}")
         data = response.json()
         return jsonify(data['tracks']['track']), 200
+    except ValueError as ve:
+        logging.error(f"Erreur lors de la récupération des recommandations musicales : {ve}")
+        return jsonify({"message": str(ve)}), 500
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des recommandations musicales : {e}")
         return jsonify({"message": "Une erreur est survenue lors de la récupération des recommandations musicales"}), 500
