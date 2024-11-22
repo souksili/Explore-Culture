@@ -51,84 +51,69 @@ document.getElementById('confirmDeleteButton').addEventListener('click', () => {
     confirmDeleteModal.style.display = 'none';
 });
 
-// Initialisation de la carte 3D avec CesiumJS
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhZjVkZDRjNC05M2JkLTQ3MmYtYjFhMS1lZjlmYjdlNDZhZDAiLCJpZCI6MjU3MzczLCJpYXQiOjE3MzIzMTI5Mjd9.BaKdEdIFKNov8EiF5DhI-yAVOrfdOWhAcZuT60PmGhA'; // Remplacez par votre token d'accès
+// Initialisation de la carte
+const map = L.map('map').setView([31.7917, -7.0926], 5);
 
-const viewer = new Cesium.Viewer('cesiumContainer', {
-    terrainProvider: Cesium.createWorldTerrain({
-        requestVertexNormals: true,
-        requestWaterMask: true
-    }),
-    imageryProvider: new Cesium.IonImageryProvider({ assetId: 1 }), // Utilisez un asset ID valide
-    baseLayerPicker: false,
-    geocoder: false,
-    homeButton: false,
-    sceneModePicker: false,
-    navigationHelpButton: false,
-    animation: false,
-    timeline: false,
-    fullscreenButton: false,
-    vrButton: false
-});
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
 
-let routeEntities = [];
+let routeControl;
 
 // Gestion des waypoints et de la navigation
 function initializeWaypoints(addresses) {
     // Supprimer les itinéraires précédents
-    viewer.entities.removeAll();
-    routeEntities = [];
-
-    addresses.forEach(({ latitude, longitude, nom, description }, index) => {
-        const emoji = index === 0 ? '🏁' : index === addresses.length - 1 ? '🏁' : '📍';
-        const entity = viewer.entities.add({
-            position: Cesium.Cartesian3.fromDegrees(longitude, latitude),
-            billboard: {
-                image: emoji,
-                width: 50,
-                height: 50
-            },
-            label: {
-                text: `<b>${nom}</b><br>${description || 'Aucune description'}`,
-                font: '14pt monospace',
-                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                outlineWidth: 2,
-                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                horizontalOrigin: Cesium.HorizontalOrigin.CENTER
+    if (routeControl) {
+        map.removeControl(routeControl);
+        map.eachLayer(layer => {
+            if (layer instanceof L.Marker || layer instanceof L.Routing.Line) {
+                map.removeLayer(layer);
             }
         });
-        routeEntities.push(entity);
+    }
+
+    const waypoints = addresses.map(({ latitude, longitude, nom, description }, index) => {
+        const emoji = index === 0 ? '🏁' : index === addresses.length - 1 ? '🏁' : '📍';
+        L.marker([latitude, longitude], { icon: L.divIcon({ className: 'emoji-marker', html: emoji }) })
+            .addTo(map)
+            .bindPopup(`<b>${nom}</b><br>${description || 'Aucune description'}`);
+        return L.latLng(latitude, longitude);
     });
 
+    routeControl = L.Routing.control({ waypoints, createMarker: () => null }).addTo(map);
+
+    const animatedMarker = L.marker([0, 0], { icon: L.divIcon({ className: 'emoji-marker', html: '🚗' }) }).addTo(map);
     const startButton = document.getElementById('startButton');
     const toggleInstructions = document.getElementById('toggleInstructions');
 
     let instructionsVisible = true;
 
-    startButton.addEventListener('click', async () => {
-        let index = 0;
-        const interval = setInterval(() => {
-            if (index < routeEntities.length) {
-                viewer.zoomTo(routeEntities[index]);
-                index++;
-            } else {
-                clearInterval(interval);
-                showEndTripModal();
+    routeControl.on('routesfound', ({ routes }) => {
+        const routeCoordinates = routes[0].coordinates;
+        startButton.disabled = routeCoordinates.length === 0;
+
+        startButton.addEventListener('click', () => {
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index < routeCoordinates.length) {
+                    animatedMarker.setLatLng(routeCoordinates[index]);
+                    index++;
+                } else {
+                    clearInterval(interval);
+                    showEndTripModal();
+                }
+            }, 50);
+        });
+
+        toggleInstructions.addEventListener('click', () => {
+            const routingContainer = document.querySelector('.leaflet-routing-container');
+            if (routingContainer) {
+                instructionsVisible = !instructionsVisible;
+                routingContainer.style.display = instructionsVisible ? 'block' : 'none';
+                toggleInstructions.textContent = instructionsVisible ? 'Masquer Instructions' : 'Afficher Instructions';
             }
-        }, 500);
-
-        // Déclencher la musique en fonction de l'itinéraire
-        //const country = await getCountryFromCoordinates(addresses[0].latitude, addresses[0].longitude);
-        playMusicBasedOnCountry("Italie");
-    });
-
-    toggleInstructions.addEventListener('click', () => {
-        const routingContainer = document.querySelector('.leaflet-routing-container');
-        if (routingContainer) {
-            instructionsVisible = !instructionsVisible;
-            routingContainer.style.display = instructionsVisible ? 'block' : 'none';
-            toggleInstructions.textContent = instructionsVisible ? 'Masquer Instructions' : 'Afficher Instructions';
-        }
+        });
     });
 }
 
@@ -367,43 +352,3 @@ function sendMessage() {
 
 // Initialisation
 fetchHistoriqueFromServer();
-
-// Fonction pour obtenir les clés API depuis le serveur
-async function fetchApiKeys() {
-    const response = await fetch('/api/keys');
-    const data = await response.json();
-    return data;
-}
-
-// Fonction pour obtenir le pays à partir des coordonnées
-async function getCountryFromCoordinates(latitude, longitude) {
-    const { opencageApiKey } = await fetchApiKeys();
-    const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${opencageApiKey}`);
-    const data = await response.json();
-
-    if (data.results && data.results.length > 0) {
-        const components = data.results[0].components;
-        return components.country_code;
-    }
-
-    return null;
-}
-
-// Fonction pour jouer de la musique en fonction du pays
-async function playMusicBasedOnCountry(country) {
-    const response = await fetch(`/api/lastfm/recommendations/${country}`);
-    const tracks = await response.json();
-
-    if (tracks && tracks.length > 0) {
-        console.log('Recommended Tracks in', country, ':', tracks);
-        // Vous pouvez utiliser ces informations pour jouer de la musique ou afficher des informations sur les morceaux
-        tracks.forEach(track => {
-            console.log(`Title: ${track.name}, Artist: ${track.artist.name}, URL: ${track.url}`);
-            // Ajoutez ici le code pour jouer la musique, par exemple en utilisant un lecteur audio HTML5
-            const audio = new Audio(track.url);
-            audio.play();
-        });
-    } else {
-        console.error('Aucun morceau trouvé pour le pays :', country);
-    }
-}

@@ -15,7 +15,6 @@ from email.utils import formataddr
 import unicodedata
 import re
 import json
-import requests
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from mistralai import Mistral
 
@@ -30,8 +29,6 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('SMTP_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('SMTP_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('SMTP_USERNAME')
-LASTFM_API_KEY = os.getenv('LASTFM_API_KEY')
-OPENCAGE_API_KEY = os.getenv('OPENCAGE_API_KEY')
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -474,32 +471,6 @@ def editer_profil():
     except Exception as e:
         logging.error(f"Erreur lors de la mise à jour du profil : {e}")
         return jsonify({"message": "Une erreur est survenue lors de la mise à jour du profil"}), 500
-
-@app.route('/api/lastfm/recommendations/<country>', methods=['GET'])
-def get_music_recommendations(country):
-    try:
-        logging.info(f"Route /api/lastfm/recommendations/{country} appelée")
-        logging.info(f"LASTFM_API_KEY: {LASTFM_API_KEY}")  # Ajoutez ce log
-        response = requests.get(f"http://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country={country}&api_key={LASTFM_API_KEY}&format=json")
-        logging.info(f"Response status code: {response.status_code}")  # Ajoutez ce log
-        logging.info(f"Response content: {response.content}")  # Ajoutez ce log
-        if response.status_code != 200:
-            raise ValueError(f"Erreur lors de la récupération des recommandations musicales : {response.content}")
-        data = response.json()
-        return jsonify(data['tracks']['track']), 200
-    except ValueError as ve:
-        logging.error(f"Erreur lors de la récupération des recommandations musicales : {ve}")
-        return jsonify({"message": str(ve)}), 500
-    except Exception as e:
-        logging.error(f"Erreur lors de la récupération des recommandations musicales : {e}")
-        return jsonify({"message": "Une erreur est survenue lors de la récupération des recommandations musicales"}), 500
-
-@app.route('/api/keys', methods=['GET'])
-def get_api_keys():
-    return jsonify({
-        'opencageApiKey': OPENCAGE_API_KEY,
-        'lastfmApiKey': LASTFM_API_KEY
-    })
 
 if __name__ == '__main__':
     with app.app_context():
