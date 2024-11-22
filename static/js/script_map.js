@@ -106,8 +106,8 @@ function initializeWaypoints(addresses) {
             }, 50);
 
             // Déclencher la musique en fonction de l'itinéraire
-            const country = await getCountryFromCoordinates(addresses[0].latitude, addresses[0].longitude);
-            playMusicBasedOnCountry(country);
+            //const country = await getCountryFromCoordinates(addresses[0].latitude, addresses[0].longitude);
+            playMusicBasedOnCountry("Italie");
         });
 
         toggleInstructions.addEventListener('click', () => {
