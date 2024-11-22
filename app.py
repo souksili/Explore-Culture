@@ -29,6 +29,9 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('SMTP_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('SMTP_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('SMTP_USERNAME')
+OPENCAGE_API_KEY = os.getenv('OPENCAGE_API_KEY')
+SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
+SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -471,6 +474,14 @@ def editer_profil():
     except Exception as e:
         logging.error(f"Erreur lors de la mise à jour du profil : {e}")
         return jsonify({"message": "Une erreur est survenue lors de la mise à jour du profil"}), 500
+
+@app.route('/api/keys', methods=['GET'])
+def get_api_keys():
+    return jsonify({
+        'opencageApiKey': OPENCAGE_API_KEY,
+        'spotifyClientId': SPOTIFY_CLIENT_ID,
+        'spotifyClientSecret': SPOTIFY_CLIENT_SECRET
+    })
 
 if __name__ == '__main__':
     with app.app_context():

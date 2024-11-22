@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 document.addEventListener('DOMContentLoaded', () => {
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) {
@@ -359,10 +357,17 @@ function sendMessage() {
 // Initialisation
 fetchHistoriqueFromServer();
 
+// Fonction pour obtenir les clés API depuis le serveur
+async function fetchApiKeys() {
+    const response = await fetch('/api/keys');
+    const data = await response.json();
+    return data;
+}
+
 // Fonction pour obtenir le pays à partir des coordonnées
 async function getCountryFromCoordinates(latitude, longitude) {
-    const apiKey = process.env.OPENCAGE_API_KEY;
-    const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${apiKey}`);
+    const { opencageApiKey } = await fetchApiKeys();
+    const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${opencageApiKey}`);
     const data = await response.json();
 
     if (data.results && data.results.length > 0) {
@@ -375,9 +380,8 @@ async function getCountryFromCoordinates(latitude, longitude) {
 
 // Fonction pour obtenir un token d'accès Spotify
 async function getSpotifyAccessToken() {
-    const clientId = process.env.SPOTIFY_CLIENT_ID;
-    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
-    const authString = btoa(`${clientId}:${clientSecret}`);
+    const { spotifyClientId, spotifyClientSecret } = await fetchApiKeys();
+    const authString = btoa(`${spotifyClientId}:${spotifyClientSecret}`);
 
     const response = await fetch('https://accounts.spotify.com/api/token', {
         method: 'POST',
