@@ -51,73 +51,78 @@ document.getElementById('confirmDeleteButton').addEventListener('click', () => {
     confirmDeleteModal.style.display = 'none';
 });
 
-// Initialisation de la carte
-const map = L.map('map').setView([31.7917, -7.0926], 5);
+// Initialisation de la carte 3D avec CesiumJS
+const viewer = new Cesium.Viewer('cesiumContainer', {
+    terrainProvider: Cesium.createWorldTerrain(),
+    baseLayerPicker: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    navigationHelpButton: false,
+    animation: false,
+    timeline: false,
+    fullscreenButton: false,
+    vrButton: false
+});
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-
-let routeControl;
+let routeEntities = [];
 
 // Gestion des waypoints et de la navigation
 function initializeWaypoints(addresses) {
     // Supprimer les itinéraires précédents
-    if (routeControl) {
-        map.removeControl(routeControl);
-        map.eachLayer(layer => {
-            if (layer instanceof L.Marker || layer instanceof L.Routing.Line) {
-                map.removeLayer(layer);
+    viewer.entities.removeAll();
+    routeEntities = [];
+
+    addresses.forEach(({ latitude, longitude, nom, description }, index) => {
+        const emoji = index === 0 ? '🏁' : index === addresses.length - 1 ? '🏁' : '📍';
+        const entity = viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(longitude, latitude),
+            billboard: {
+                image: emoji,
+                width: 50,
+                height: 50
+            },
+            label: {
+                text: `<b>${nom}</b><br>${description || 'Aucune description'}`,
+                font: '14pt monospace',
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                outlineWidth: 2,
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                horizontalOrigin: Cesium.HorizontalOrigin.CENTER
             }
         });
-    }
-
-    const waypoints = addresses.map(({ latitude, longitude, nom, description }, index) => {
-        const emoji = index === 0 ? '🏁' : index === addresses.length - 1 ? '🏁' : '📍';
-        L.marker([latitude, longitude], { icon: L.divIcon({ className: 'emoji-marker', html: emoji }) })
-            .addTo(map)
-            .bindPopup(`<b>${nom}</b><br>${description || 'Aucune description'}`);
-        return L.latLng(latitude, longitude);
+        routeEntities.push(entity);
     });
 
-    routeControl = L.Routing.control({ waypoints, createMarker: () => null }).addTo(map);
-
-    const animatedMarker = L.marker([0, 0], { icon: L.divIcon({ className: 'emoji-marker', html: '🚗' }) }).addTo(map);
     const startButton = document.getElementById('startButton');
     const toggleInstructions = document.getElementById('toggleInstructions');
 
     let instructionsVisible = true;
 
-    routeControl.on('routesfound', ({ routes }) => {
-        const routeCoordinates = routes[0].coordinates;
-        startButton.disabled = routeCoordinates.length === 0;
-
-        startButton.addEventListener('click', async () => {
-            let index = 0;
-            const interval = setInterval(() => {
-                if (index < routeCoordinates.length) {
-                    animatedMarker.setLatLng(routeCoordinates[index]);
-                    index++;
-                } else {
-                    clearInterval(interval);
-                    showEndTripModal();
-                }
-            }, 50);
-
-            // Déclencher la musique en fonction de l'itinéraire
-            //const country = await getCountryFromCoordinates(addresses[0].latitude, addresses[0].longitude);
-            playMusicBasedOnCountry("Italie");
-        });
-
-        toggleInstructions.addEventListener('click', () => {
-            const routingContainer = document.querySelector('.leaflet-routing-container');
-            if (routingContainer) {
-                instructionsVisible = !instructionsVisible;
-                routingContainer.style.display = instructionsVisible ? 'block' : 'none';
-                toggleInstructions.textContent = instructionsVisible ? 'Masquer Instructions' : 'Afficher Instructions';
+    startButton.addEventListener('click', async () => {
+        let index = 0;
+        const interval = setInterval(() => {
+            if (index < routeEntities.length) {
+                viewer.zoomTo(routeEntities[index]);
+                index++;
+            } else {
+                clearInterval(interval);
+                showEndTripModal();
             }
-        });
+        }, 500);
+
+        // Déclencher la musique en fonction de l'itinéraire
+        //const country = await getCountryFromCoordinates(addresses[0].latitude, addresses[0].longitude);
+        playMusicBasedOnCountry("Italie");
+    });
+
+    toggleInstructions.addEventListener('click', () => {
+        const routingContainer = document.querySelector('.leaflet-routing-container');
+        if (routingContainer) {
+            instructionsVisible = !instructionsVisible;
+            routingContainer.style.display = instructionsVisible ? 'block' : 'none';
+            toggleInstructions.textContent = instructionsVisible ? 'Masquer Instructions' : 'Afficher Instructions';
+        }
     });
 }
 

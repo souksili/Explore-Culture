@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carte et Chat Voyage</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.86/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_map.css') }}">
 </head>
@@ -30,7 +27,7 @@
     </div>
     <div id="content">
         <div id="mapContainer">
-            <div id="map"></div>
+            <div id="cesiumContainer"></div>
             <div id="controls">
                 <button id="startButton" disabled><i class="fas fa-play-circle"></i> Lancer le trajet</button>
                 <button id="toggleInstructions"><i class="fas fa-info-circle"></i> Masquer Instructions</button>
@@ -79,6 +76,7 @@
             <button id="submitRating">Soumettre</button>
         </div>
     </div>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.86/Build/Cesium/Cesium.js"></script>
     <script src="{{ url_for('static', filename='js/script_map.js') }}"></script>
 </body>
 </html>
