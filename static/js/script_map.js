@@ -52,8 +52,11 @@ document.getElementById('confirmDeleteButton').addEventListener('click', () => {
 });
 
 // Initialisation de la carte 3D avec CesiumJS
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhZjVkZDRjNC05M2JkLTQ3MmYtYjFhMS1lZjlmYjdlNDZhZDAiLCJpZCI6MjU3MzczLCJpYXQiOjE3MzIzMTI5Mjd9.BaKdEdIFKNov8EiF5DhI-yAVOrfdOWhAcZuT60PmGhA'; // Remplacez par votre token d'accès
+
 const viewer = new Cesium.Viewer('cesiumContainer', {
     terrainProvider: Cesium.createWorldTerrain(),
+    imageryProvider: Cesium.IonImageryProvider.fromAssetId(1), // Utilisez un asset ID valide
     baseLayerPicker: false,
     geocoder: false,
     homeButton: false,
