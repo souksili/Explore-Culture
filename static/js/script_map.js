@@ -5,9 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         fetch('/dashboard', {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
         })
         .then(response => {
             if (response.status === 401) {
@@ -16,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return response.json();
         })
         .then(data => {
+            console.log(get_jwt())
             const jwt = get_jwt();
             if (jwt.est_admin) {
                 document.getElementById('addZoneButton').style.display = 'inline-block';
