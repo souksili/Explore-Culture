@@ -201,7 +201,7 @@ def connexion():
             logging.warning(f"Mot de passe incorrect pour : {email}")
             return jsonify({"message": "Mot de passe incorrect"}), 401
 
-        access_token = create_access_token(identity=str(utilisateur.id), expires_delta=timedelta(days=1))
+        access_token = create_access_token(identity={"id": str(utilisateur.id), "est_admin": utilisateur.est_admin}, expires_delta=timedelta(days=1))
         logging.info(f"Connexion réussie pour {email}")
         return jsonify(access_token=access_token), 200
     except Exception as e:

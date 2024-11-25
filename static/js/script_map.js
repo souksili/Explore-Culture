@@ -10,6 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.status === 401) {
                 window.location.href = '/connexion';
             }
+            return response.json();
+        })
+        .then(data => {
+            if (data.est_admin) {
+                document.getElementById('addZoneButton').style.display = 'inline-block';
+            }
         })
         .catch(error => {
             console.error('Erreur:', error);
