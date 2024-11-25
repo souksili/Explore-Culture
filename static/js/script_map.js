@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         fetch('/dashboard', {
             method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
         })
         .then(response => {
             if (response.status === 401) {
@@ -13,7 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return response.json();
         })
         .then(data => {
-            if (data.est_admin) {
+            const jwt = get_jwt();
+            if (jwt.est_admin) {
                 document.getElementById('addZoneButton').style.display = 'inline-block';
             }
         })
@@ -23,6 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+function get_jwt() {
+    const token = localStorage.getItem('accessToken');
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+}
 
 document.getElementById('burgerIcon').addEventListener('click', () => {
     const menuContent = document.getElementById('menuContent');
