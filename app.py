@@ -296,15 +296,15 @@ def chat():
                 if isinstance(addresses, list):
                     response = jsonify({
                         "response": "Chargement des adresses sur la carte...",
-                        "addresses": addresses,  # Transmettez les adresses au client
+                        "addresses": addresses,
                         "redirect_url": "/dashboard"
                     })
                 else:
                     response = jsonify({"response": "Aucune adresse valide trouvée."})
-                user_context.pop(user_id, None)  # Réinitialiser le contexte
+                user_context.pop(user_id, None)
             elif re.search(r'\bnon\b', user_input):
                 response = jsonify({"response": "D'accord, si vous avez d'autres questions, n'hésitez pas!"})
-                user_context.pop(user_id, None)  # Réinitialiser le contexte
+                user_context.pop(user_id, None)
             else:
                 response = fallback_response()
         else:

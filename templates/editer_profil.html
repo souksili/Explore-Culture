@@ -21,14 +21,18 @@
     </div>
     <h1>Éditer Profil</h1>
     <form id="editProfileForm">
+        <div class="profile-photo">
+            <img id="profileImage" src="#" alt="Photo de profil">
+            <label for="photo_url" class="upload-icon">
+                <i class="fas fa-camera"></i>
+            </label>
+            <input type="file" id="photo_url" name="photo_url" accept="image/*" style="display:none;">
+        </div>
         <label for="prenom">Prénom:</label>
         <input type="text" id="prenom" name="prenom">
 
         <label for="nom_complet">Nom Complet:</label>
         <input type="text" id="nom_complet" name="nom_complet">
-
-        <label for="photo_url">URL de la Photo:</label>
-        <input type="text" id="photo_url" name="photo_url">
 
         <label for="langue">Langue:</label>
         <input type="text" id="langue" name="langue">

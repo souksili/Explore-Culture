@@ -51,7 +51,6 @@ document.getElementById('confirmDeleteButton').addEventListener('click', () => {
     confirmDeleteModal.style.display = 'none';
 });
 
-// Initialisation de la carte
 const map = L.map('map').setView([31.7917, -7.0926], 5);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -61,9 +60,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let routeControl;
 
-// Gestion des waypoints et de la navigation
 function initializeWaypoints(addresses) {
-    // Supprimer les itinéraires précédents
     if (routeControl) {
         map.removeControl(routeControl);
         map.eachLayer(layer => {
@@ -117,7 +114,6 @@ function initializeWaypoints(addresses) {
     });
 }
 
-// Modal de fin de trajet
 function showEndTripModal() {
     const endTripModal = document.getElementById('endTripModal');
     endTripModal.style.display = 'flex';
@@ -147,7 +143,6 @@ function showEndTripModal() {
     });
 }
 
-// Récupération de l'historique depuis la BDD
 function fetchHistoriqueFromServer() {
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) {
@@ -181,7 +176,6 @@ function fetchHistoriqueFromServer() {
             return;
         }
 
-        // Regrouper les adresses par group_id
         const groupedHistorique = historique.reduce((acc, address) => {
             if (!acc[address.group_id]) {
                 acc[address.group_id] = [];
@@ -190,7 +184,6 @@ function fetchHistoriqueFromServer() {
             return acc;
         }, {});
 
-        // Créer des liens cliquables pour chaque groupe d'adresses
         for (const group_id in groupedHistorique) {
             const addresses = groupedHistorique[group_id];
             const listItem = document.createElement('li');
@@ -254,7 +247,6 @@ function deleteItinerary(groupId) {
     });
 }
 
-// Gestion du bouton de chat
 document.getElementById('toggleChat').addEventListener('click', () => {
     const chatContainer = document.getElementById('chatContainer');
     const toggleChatButton = document.getElementById('toggleChat');
@@ -268,7 +260,6 @@ document.getElementById('toggleChat').addEventListener('click', () => {
     }
 });
 
-// Déconnexion
 document.getElementById('logoutLink').addEventListener('click', (event) => {
     event.preventDefault();
 
@@ -300,7 +291,6 @@ document.getElementById('logoutLink').addEventListener('click', (event) => {
     });
 });
 
-// Sauvegarde des adresses dans la BDD
 function saveHistoriqueToServer(addresses) {
     fetch('/api/historique', {
         method: 'POST',
@@ -311,11 +301,10 @@ function saveHistoriqueToServer(addresses) {
         body: JSON.stringify({ addresses })
     })
     .then(response => response.json())
-    .then(() => fetchHistoriqueFromServer()) // Rafraîchit l'historique après sauvegarde
+    .then(() => fetchHistoriqueFromServer())
     .catch(console.error);
 }
 
-// Gestion du chat et sauvegarde des adresses
 function sendMessage() {
     const userInput = document.getElementById('userInput');
     const message = userInput.value.trim();
@@ -339,8 +328,8 @@ function sendMessage() {
     .then(data => {
         chatBox.innerHTML += `<p><b>Assistant :</b> ${data.response}</p>`;
         if (data.addresses && Array.isArray(data.addresses)) {
-            saveHistoriqueToServer(data.addresses); // Sauvegarde dans la BDD
-            initializeWaypoints(data.addresses); // Initialise l'itinéraire sur la carte
+            saveHistoriqueToServer(data.addresses);
+            initializeWaypoints(data.addresses);
         }
         chatBox.scrollTop = chatBox.scrollHeight;
     })
@@ -350,5 +339,4 @@ function sendMessage() {
     });
 }
 
-// Initialisation
 fetchHistoriqueFromServer();
