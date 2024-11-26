@@ -146,7 +146,7 @@ h1 {
 .input-container {
     display: flex;
     padding: 15px;
-    background: #2e2e2e;
+    background: #ffffff;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -419,4 +419,74 @@ button:hover {
 #cancelDeleteButton:hover {
     background: linear-gradient(to right, #2575fc, #6a11cb);
     transform: scale(1.05);
+}
+
+.input-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.input-container input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background-color: #fff; /* Couleur de fond plus claire */
+    color: #333; /* Couleur du texte */
+}
+
+.geolocation-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 20px;
+    color: #555; /* Couleur de l'icône */
+}
+
+.error {
+    color: red;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.modal input[type="range"] {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.modal #sizeValue {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.modal button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    margin: 10px 0;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    opacity: 0.9;
+}
+
+.modal button:hover {
+    opacity: 1;
+}
+
+.modal textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background-color: #fff;
+    color: #333;
 }

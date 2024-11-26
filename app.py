@@ -90,6 +90,29 @@ class Historique(db.Model):
             "group_id": self.group_id
         }
 
+class Zone(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False)
+    nom = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+    taille = db.Column(db.Integer, nullable=False)
+    couleur = db.Column(db.String(7), nullable=False)
+    date_ajout = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nom": self.nom,
+            "description": self.description,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "taille": self.taille,
+            "couleur": self.couleur,
+            "date_ajout": self.date_ajout.isoformat(),
+        }
+
 def send_email(recipient, subject, body):
     try:
         smtp_server = os.getenv('MAIL_SERVER')
@@ -150,6 +173,73 @@ def editer_profil_page():
     logging.info("Route /editer_profil appelée")
     return render_template('editer_profil.html')
 
+@app.route('/api/zones', methods=['POST'])
+@jwt_required()
+def ajouter_zone():
+    try:
+        logging.info("Route /api/zones (POST) appelée")
+        data = request.get_json()
+        utilisateur_id = get_jwt_identity()
+        nom = data.get('nom')
+        description = data.get('description')
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        taille = data.get('taille')
+        couleur = data.get('couleur')
+
+        zone = Zone(
+            utilisateur_id=utilisateur_id,
+            nom=nom,
+            description=description,
+            latitude=latitude,
+            longitude=longitude,
+            taille=taille,
+            couleur=couleur
+        )
+        db.session.add(zone)
+        db.session.commit()
+
+        logging.info(f"Zone ajoutée pour l'utilisateur {utilisateur_id}")
+        return jsonify({"message": "Zone ajoutée."}), 201
+    except Exception as e:
+        logging.error(f"Erreur lors de l'ajout de la zone : {e}")
+        return jsonify({"message": "Une erreur est survenue."}), 500
+
+@app.route('/api/user_role', methods=['GET'])
+@jwt_required()
+def get_user_role():
+    try:
+        logging.info("Route /api/user_role appelée")
+        utilisateur_id = get_jwt_identity()
+        utilisateur = Utilisateur.query.get(utilisateur_id)
+        if utilisateur:
+            return jsonify({"est_admin": utilisateur.est_admin}), 200
+        else:
+            return jsonify({"message": "Utilisateur non trouvé"}), 404
+    except Exception as e:
+        logging.error(f"Erreur lors de la vérification du rôle de l'utilisateur : {e}")
+        return jsonify({"message": "Une erreur est survenue"}), 500
+
+@app.route('/api/zones', methods=['GET'])
+@jwt_required()
+def recuperer_zones():
+    try:
+        logging.info("Route /api/zones (GET) appelée")
+        utilisateur_id = get_jwt_identity()
+
+        zones = Zone.query.filter_by(utilisateur_id=utilisateur_id).all()
+        if not zones:
+            logging.info("Aucune zone trouvée pour cet utilisateur.")
+            return jsonify([]), 200
+
+        zones_dict = [zone.to_dict() for zone in zones]
+
+        logging.info(f"Zones récupérées: {zones_dict}")
+        return jsonify(zones_dict), 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération des zones : {e}")
+        return jsonify({"message": "Une erreur est survenue lors de la récupération des zones"}), 500
+
 @app.route('/inscription', methods=['POST'])
 def inscription():
     try:
@@ -201,7 +291,7 @@ def connexion():
             logging.warning(f"Mot de passe incorrect pour : {email}")
             return jsonify({"message": "Mot de passe incorrect"}), 401
 
-        access_token = create_access_token(identity={"id": str(utilisateur.id), "est_admin": utilisateur.est_admin}, expires_delta=timedelta(days=1))
+        access_token = create_access_token(identity=str(utilisateur.id), expires_delta=timedelta(days=1))
         logging.info(f"Connexion réussie pour {email}")
         return jsonify(access_token=access_token), 200
     except Exception as e:

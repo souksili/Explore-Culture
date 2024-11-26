@@ -5,39 +5,43 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         fetch('/dashboard', {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
         })
         .then(response => {
             if (response.status === 401) {
                 window.location.href = '/connexion';
-            }
-            return response.json();
-        })
-        .then(() => {
-            const jwt = get_jwt();
-            if (jwt.sub.est_admin) {
-                document.getElementById('addZoneButton').style.display = 'inline-block';
             }
         })
         .catch(error => {
             console.error('Erreur:', error);
             window.location.href = '/connexion';
         });
+
+        fetch('/api/user_role', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.est_admin) {
+                document.getElementById('addZoneButton').style.display = 'inline-block';
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la vérification du rôle de l\'utilisateur:', error);
+        });
+
+        // Récupérer et afficher les zones
+        fetchZonesFromServer();
     }
 });
 
-function get_jwt() {
-    const token = localStorage.getItem('accessToken');
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-
-    return JSON.parse(jsonPayload);
-}
+document.getElementById('addZoneButton').addEventListener('click', () => {
+    const addZoneModal = document.getElementById('addZoneModal');
+    addZoneModal.style.display = 'flex';
+});
 
 document.getElementById('burgerIcon').addEventListener('click', () => {
     const menuContent = document.getElementById('menuContent');
@@ -72,6 +76,158 @@ document.getElementById('confirmDeleteButton').addEventListener('click', () => {
     confirmDeleteModal.style.display = 'none';
 });
 
+document.getElementById('closeAddZoneModal').addEventListener('click', () => {
+    const addZoneModal = document.getElementById('addZoneModal');
+    addZoneModal.style.display = 'none';
+});
+
+document.getElementById('size').addEventListener('input', (event) => {
+    const sizeValue = document.getElementById('sizeValue');
+    sizeValue.textContent = event.target.value;
+});
+
+document.getElementById('geolocationIcon').addEventListener('click', () => {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(getAddressFromCoordinates, handleLocationError);
+    } else {
+        alert('La géolocalisation n\'est pas supportée par ce navigateur.');
+    }
+});
+
+document.getElementById('address').addEventListener('input', (event) => {
+    const address = event.target.value;
+    const addressError = document.getElementById('addressError');
+    if (address) {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    addressError.textContent = '';
+                } else {
+                    addressError.textContent = 'Adresse non trouvée';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la recherche de l\'adresse:', error);
+                addressError.textContent = 'Erreur lors de la recherche de l\'adresse';
+            });
+    } else {
+        addressError.textContent = '';
+    }
+});
+
+document.getElementById('addZoneForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const address = document.getElementById('address').value;
+    const description = document.getElementById('description').value;
+    const size = document.getElementById('size').value;
+    const color = getRandomColor();
+    const addressError = document.getElementById('addressError');
+
+    if (addressError.textContent) {
+        alert('Veuillez corriger l\'adresse avant de soumettre.');
+        return;
+    }
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                const { lat, lon } = data[0];
+                const zoneData = {
+                    nom: address,
+                    description: description,
+                    latitude: lat,
+                    longitude: lon,
+                    taille: size,
+                    couleur: color
+                };
+
+                fetch('/api/zones', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                    },
+                    body: JSON.stringify(zoneData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === "Zone ajoutée.") {
+                        addZoneToMap(lat, lon, size, color, address, description);
+                        const addZoneModal = document.getElementById('addZoneModal');
+                        addZoneModal.style.display = 'none';
+                        // Récupérer et afficher les zones après l'ajout
+                        fetchZonesFromServer();
+                    } else {
+                        alert('Erreur lors de l\'ajout de la zone');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de l\'ajout de la zone:', error);
+                });
+            } else {
+                alert('Adresse non trouvée');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la recherche de l\'adresse:', error);
+        });
+});
+
+function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
+function addZoneToMap(lat, lon, size, color, title, description) {
+    L.circle([lat, lon], {
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.5,
+        radius: size
+    }).addTo(map).bindPopup(`<b>${title}</b><br>${description}`);
+}
+
+function getAddressFromCoordinates(position) {
+    const { latitude, longitude } = position.coords;
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.display_name) {
+                const addressInput = document.getElementById('address');
+                addressInput.value = data.display_name;
+            } else {
+                alert('Adresse non trouvée');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération de l\'adresse:', error);
+        });
+}
+
+function handleLocationError(error) {
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            alert('Vous avez refusé la demande de géolocalisation.');
+            break;
+        case error.POSITION_UNAVAILABLE:
+            alert('L\'information de géolocalisation n\'est pas disponible.');
+            break;
+        case error.TIMEOUT:
+            alert('La demande de géolocalisation a expiré.');
+            break;
+        case error.UNKNOWN_ERROR:
+            alert('Une erreur inconnue s\'est produite.');
+            break;
+    }
+}
+
+// Initialisation de la carte
 const map = L.map('map').setView([31.7917, -7.0926], 5);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -81,7 +237,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let routeControl;
 
+// Gestion des waypoints et de la navigation
 function initializeWaypoints(addresses) {
+    // Supprimer les itinéraires précédents
     if (routeControl) {
         map.removeControl(routeControl);
         map.eachLayer(layer => {
@@ -135,6 +293,7 @@ function initializeWaypoints(addresses) {
     });
 }
 
+// Modal de fin de trajet
 function showEndTripModal() {
     const endTripModal = document.getElementById('endTripModal');
     endTripModal.style.display = 'flex';
@@ -164,6 +323,7 @@ function showEndTripModal() {
     });
 }
 
+// Récupération de l'historique depuis la BDD
 function fetchHistoriqueFromServer() {
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) {
@@ -197,6 +357,7 @@ function fetchHistoriqueFromServer() {
             return;
         }
 
+        // Regrouper les adresses par group_id
         const groupedHistorique = historique.reduce((acc, address) => {
             if (!acc[address.group_id]) {
                 acc[address.group_id] = [];
@@ -205,6 +366,7 @@ function fetchHistoriqueFromServer() {
             return acc;
         }, {});
 
+        // Créer des liens cliquables pour chaque groupe d'adresses
         for (const group_id in groupedHistorique) {
             const addresses = groupedHistorique[group_id];
             const listItem = document.createElement('li');
@@ -268,6 +430,7 @@ function deleteItinerary(groupId) {
     });
 }
 
+// Gestion du bouton de chat
 document.getElementById('toggleChat').addEventListener('click', () => {
     const chatContainer = document.getElementById('chatContainer');
     const toggleChatButton = document.getElementById('toggleChat');
@@ -281,6 +444,7 @@ document.getElementById('toggleChat').addEventListener('click', () => {
     }
 });
 
+// Déconnexion
 document.getElementById('logoutLink').addEventListener('click', (event) => {
     event.preventDefault();
 
@@ -312,6 +476,7 @@ document.getElementById('logoutLink').addEventListener('click', (event) => {
     });
 });
 
+// Sauvegarde des adresses dans la BDD
 function saveHistoriqueToServer(addresses) {
     fetch('/api/historique', {
         method: 'POST',
@@ -322,10 +487,11 @@ function saveHistoriqueToServer(addresses) {
         body: JSON.stringify({ addresses })
     })
     .then(response => response.json())
-    .then(() => fetchHistoriqueFromServer())
+    .then(() => fetchHistoriqueFromServer()) // Rafraîchit l'historique après sauvegarde
     .catch(console.error);
 }
 
+// Gestion du chat et sauvegarde des adresses
 function sendMessage() {
     const userInput = document.getElementById('userInput');
     const message = userInput.value.trim();
@@ -349,8 +515,8 @@ function sendMessage() {
     .then(data => {
         chatBox.innerHTML += `<p><b>Assistant :</b> ${data.response}</p>`;
         if (data.addresses && Array.isArray(data.addresses)) {
-            saveHistoriqueToServer(data.addresses);
-            initializeWaypoints(data.addresses);
+            saveHistoriqueToServer(data.addresses); // Sauvegarde dans la BDD
+            initializeWaypoints(data.addresses); // Initialise l'itinéraire sur la carte
         }
         chatBox.scrollTop = chatBox.scrollHeight;
     })
@@ -360,4 +526,48 @@ function sendMessage() {
     });
 }
 
+// Fonction pour récupérer les zones depuis le serveur
+function fetchZonesFromServer() {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+        console.error('Access token is missing');
+        return;
+    }
+
+    fetch('/api/zones', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(zones => {
+        if (!Array.isArray(zones)) {
+            throw new TypeError('Le format de la réponse est incorrect.');
+        }
+
+        // Supprimer les zones précédentes de la carte
+        map.eachLayer(layer => {
+            if (layer instanceof L.Circle) {
+                map.removeLayer(layer);
+            }
+        });
+
+        // Ajouter les nouvelles zones à la carte
+        zones.forEach(zone => {
+            addZoneToMap(zone.latitude, zone.longitude, zone.taille, zone.couleur, zone.nom, zone.description);
+        });
+    })
+    .catch(error => {
+        console.error('Erreur lors de la récupération des zones :', error);
+    });
+}
+
+// Initialisation
 fetchHistoriqueFromServer();

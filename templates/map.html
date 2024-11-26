@@ -19,7 +19,6 @@
             <div class="bar"></div>
         </div>
         <div class="menu-content" id="menuContent">
-            <a href="/editer_profil" class="menu-item">Éditer profil</a>
             <a href="#" class="menu-item" id="logoutLink">Déconnexion</a>
         </div>
     </div>
@@ -80,6 +79,32 @@
             <button id="submitRating">Soumettre</button>
         </div>
     </div>
+    <div id="addZoneModal" class="modal">
+        <div class="modal-content">
+            <span id="closeAddZoneModal" class="close">&times;</span>
+            <h2>Ajouter une Zone</h2>
+            <form id="addZoneForm">
+                <label for="address">Adresse:</label>
+                <div class="input-container">
+                    <input type="text" id="address" name="address" required>
+                    <svg id="geolocationIcon" class="geolocation-icon" viewBox="0 0 36 24" width="34" height="34">
+                        <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2" fill="none"></circle>
+                        <circle cx="12" cy="12" r="3" fill="white"></circle>
+                        <circle cx="12" cy="12" r="1.5" fill="black"></circle>
+                        <circle cx="12" cy="12" r="6" stroke="black" stroke-width="2" fill="none"></circle>
+                        <circle cx="12" cy="12" r="8" stroke="black" stroke-width="2" fill="none"></circle>
+                    </svg>
+                </div>
+                <div id="addressError" class="error"></div>
+                <label for="description">Description:</label>
+                <textarea id="description" name="description"></textarea>
+                <label for="size">Taille du cercle (100 - 1000):</label>
+                <input type="range" id="size" name="size" min="100" max="1000" value="500" required>
+                <span id="sizeValue">500</span>
+                <button type="submit">Ajouter</button>
+            </form>
+        </div>
+    </div>    
     <script src="{{ url_for('static', filename='js/script_map.js') }}"></script>
 </body>
 </html>
