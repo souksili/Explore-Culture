@@ -202,8 +202,10 @@ button:hover {
     color: #000; /* Texte en noir */
     padding: 20px;
     border-radius: 8px;
-    width: 90%;
+    width: 80%;
     max-width: 400px;
+    max-height: 80%;
+    overflow-y: auto; /* Ajout de la barre de défilement */
     text-align: center;
     box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
     animation: fadeIn 0.3s ease-in-out;
@@ -375,8 +377,10 @@ button:hover {
     color: #000;
     padding: 20px;
     border-radius: 8px;
-    width: 90%;
+    width: 80%;
     max-width: 400px;
+    max-height: 80%;
+    overflow-y: auto; /* Ajout de la barre de défilement */
     text-align: center;
     box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
     animation: fadeIn 0.3s ease-in-out;
@@ -421,72 +425,175 @@ button:hover {
     transform: scale(1.05);
 }
 
-.input-container {
-    position: relative;
-    margin-bottom: 15px;
+/* Form Styles */
+.modal-content form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.input-container input[type="text"] {
+.modal-content label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.modal-content input[type="text"],
+.modal-content textarea,
+.modal-content input[type="range"],
+.modal-content input[type="file"],
+.modal-content input[type="date"] {
     width: 100%;
     padding: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 8px;
     box-sizing: border-box;
-    background-color: #fff; /* Couleur de fond plus claire */
-    color: #333; /* Couleur du texte */
+    background-color: #fff;
+    color: #333;
+    transition: border-color 0.3s ease;
 }
 
-.geolocation-icon {
+.modal-content input[type="text"]:focus,
+.modal-content textarea:focus,
+.modal-content input[type="range"]:focus,
+.modal-content input[type="file"]:focus,
+.modal-content input[type="date"]:focus {
+    border-color: #6a11cb;
+    outline: none;
+    box-shadow: 0 0 5px rgba(106, 17, 203, 0.5);
+}
+
+.modal-content textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.modal-content button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 30px;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.modal-content button:hover {
+    background: linear-gradient(to right, #2575fc, #6a11cb);
+    transform: scale(1.05);
+}
+
+.modal-content .input-container {
+    position: relative;
+}
+
+.modal-content .geolocation-icon {
     position: absolute;
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
     font-size: 20px;
-    color: #555; /* Couleur de l'icône */
+    color: #555;
 }
 
-.error {
+.modal-content .error {
     color: red;
     font-size: 14px;
     margin-top: 5px;
 }
 
-.modal input[type="range"] {
-    width: 100%;
-    margin: 10px 0;
-}
-
-.modal #sizeValue {
+.modal-content #sizeValue {
     display: block;
     text-align: center;
     margin-top: 10px;
     font-weight: bold;
 }
 
-.modal button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    margin: 10px 0;
-    border: none;
+#pauseModal {
+    display: none;
+    position: fixed;
+    z-index: 1001; /* Assurez-vous que le z-index est plus élevé que celui de la carte */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
     cursor: pointer;
-    width: 100%;
-    opacity: 0.9;
 }
 
-.modal button:hover {
-    opacity: 1;
+/* Style pour le modal contenant uniquement une iframe */
+#pauseModal {
+    display: none; /* Masqué par défaut */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8); /* Fond sombre pour focus */
+    z-index: 1100; /* Priorité au-dessus des autres éléments */
+    justify-content: center; /* Centrage horizontal */
+    align-items: center; /* Centrage vertical */
 }
 
-.modal textarea {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    background-color: #fff;
-    color: #333;
+/* Conteneur de la modale */
+#pauseModal .modal-content {
+    width: 80%; /* Largeur de 80% de la fenêtre */
+    max-width: 900px; /* Largeur maximale */
+    height: 70%; /* Hauteur de 70% de la fenêtre */
+    background-color: #ffffff; /* Couleur de fond blanche */
+    border-radius: 12px; /* Coins arrondis */
+    overflow: hidden; /* Pour que le contenu reste à l'intérieur */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Effet d'ombre */
+    display: flex;
+    flex-direction: column; /* Organisation verticale */
+}
+
+/* Style de l'iframe à l'intérieur du modal */
+#pauseModal .modal-content iframe {
+    flex: 1; /* L'iframe prend tout l'espace disponible */
+    width: 100%; /* Occupe toute la largeur */
+    height: 100%; /* Occupe toute la hauteur */
+    border: none; /* Supprime la bordure */
+}
+
+/* Bouton de fermeture dans le modal */
+#pauseModal .modal-content .close {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 1.5rem;
+    color: #333; /* Couleur grise */
+    cursor: pointer;
+    transition: color 0.3s ease;
+    z-index: 10; /* Priorité au-dessus de l'iframe */
+}
+
+#pauseModal .modal-content .close:hover {
+    color: #000; /* Change en noir au survol */
 }

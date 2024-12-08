@@ -31,7 +31,8 @@
         <div id="mapContainer">
             <div id="map"></div>
             <div id="controls">
-                <button id="startButton" disabled><i class="fas fa-play-circle"></i> Lancer le trajet</button>
+                <button id="startButton"><i class="fas fa-play-circle"></i> Lancer le trajet</button>
+                <button id="pauseResumeButton" style="display: none;"><i class="fas fa-pause-circle"></i> Pause</button>
                 <button id="toggleInstructions"><i class="fas fa-info-circle"></i> Masquer Instructions</button>
                 <button id="addZoneButton" style="display: none;"><i class="fas fa-plus-circle"></i> Ajouter une zone</button>
             </div>
@@ -46,7 +47,7 @@
             </div>
         </div>
     </div>
-    <div id="historiqueModal" class="modal">
+    <div id="historiqueModal" class="modal modal-wrapper">
         <div class="modal-content">
             <span id="closeHistoriqueModal" class="close">&times;</span>
             <h2>Historique des Adresses</h2>
@@ -55,7 +56,16 @@
             </ul>
         </div>
     </div>
-    <div id="confirmDeleteModal" class="modal">
+    <div id="pauseModal" class="modal modal-wrapper">
+        <div class="modal-content">
+            <span id="closePauseModal" class="close">&times;</span>
+            <h2 id="zoneDetectedTitle">Zone détectée</h2>
+            <p id="zoneDetectedMessage">Vous avez atteint une zone. Souhaitez-vous continuer ?</p>
+            <button id="continueButton">Continuer</button>
+            <button id="discoverButton" data-zone-id="">Découvrir</button>
+        </div>
+    </div>    
+    <div id="confirmDeleteModal" class="modal modal-wrapper">
         <div class="modal-content">
             <span id="closeConfirmDeleteModal" class="close">&times;</span>
             <h2>Confirmation de Suppression</h2>
@@ -64,7 +74,7 @@
             <button id="cancelDeleteButton">Annuler</button>
         </div>
     </div>
-    <div id="endTripModal" class="modal">
+    <div id="endTripModal" class="modal modal-wrapper">
         <div class="modal-content">
             <span id="closeModal" class="close">&times;</span>
             <h2>Merci pour votre expérience !</h2>
@@ -79,7 +89,7 @@
             <button id="submitRating">Soumettre</button>
         </div>
     </div>
-    <div id="addZoneModal" class="modal">
+    <div id="addZoneModal" class="modal modal-wrapper">
         <div class="modal-content">
             <span id="closeAddZoneModal" class="close">&times;</span>
             <h2>Ajouter une Zone</h2>
@@ -104,7 +114,83 @@
                 <button type="submit">Ajouter</button>
             </form>
         </div>
-    </div>    
+    </div>
+    <div id="addCuisineModal" class="modal modal-wrapper">
+        <div class="modal-content">
+            <span id="closeAddCuisineModal" class="close">&times;</span>
+            <h2>Ajouter un Patrimoine Culturel (Cuisine)</h2>
+            <form id="addCuisineForm">
+                <label for="recette">Recette:</label>
+                <textarea id="recette" name="recette"></textarea>
+                <label for="ingredients">Ingrédients:</label>
+                <textarea id="ingredients" name="ingredients"></textarea>
+                <label for="tempsPreparation">Temps de Préparation:</label>
+                <input type="text" id="tempsPreparation" name="tempsPreparation">
+                <button type="submit">Ajouter</button>
+            </form>
+        </div>
+    </div>
+    <div id="addHistoireModal" class="modal modal-wrapper">
+        <div class="modal-content">
+            <span id="closeAddHistoireModal" class="close">&times;</span>
+            <h2>Ajouter un Patrimoine Culturel (Histoire)</h2>
+            <form id="addHistoireForm">
+                <label for="evenement">Événement:</label>
+                <input type="text" id="evenement" name="evenement">
+                <label for="dateEvenement">Date de l'Événement:</label>
+                <input type="date" id="dateEvenement" name="dateEvenement">
+                <label for="personnagesCles">Personnages Clés:</label>
+                <textarea id="personnagesCles" name="personnagesCles"></textarea>
+                <button type="submit">Ajouter</button>
+            </form>
+        </div>
+    </div>
+    <div id="addPersonnaliteModal" class="modal modal-wrapper">
+        <div class="modal-content">
+            <span id="closeAddPersonnaliteModal" class="close">&times;</span>
+            <h2>Ajouter un Patrimoine Culturel (Personnalité)</h2>
+            <form id="addPersonnaliteForm">
+                <label for="nomPersonnalite">Nom de la Personnalité:</label>
+                <input type="text" id="nomPersonnalite" name="nomPersonnalite">
+                <label for="biographie">Biographie:</label>
+                <textarea id="biographie" name="biographie"></textarea>
+                <label for="contributions">Contributions:</label>
+                <textarea id="contributions" name="contributions"></textarea>
+                <button type="submit">Ajouter</button>
+            </form>
+        </div>
+    </div>
+    <div id="addMusiqueModal" class="modal modal-wrapper">
+        <div class="modal-content">
+            <span id="closeAddMusiqueModal" class="close">&times;</span>
+            <h2>Ajouter un Patrimoine Culturel (Musique)</h2>
+            <form id="addMusiqueForm">
+                <label for="titreMusique">Titre de la Musique:</label>
+                <input type="text" id="titreMusique" name="titreMusique">
+                <label for="artiste">Artiste:</label>
+                <input type="text" id="artiste" name="artiste">
+                <label for="genre">Genre:</label>
+                <input type="text" id="genre" name="genre">
+                <label for="lienMusique">Lien de la Musique:</label>
+                <input type="text" id="lienMusique" name="lienMusique">
+                <button type="submit">Ajouter</button>
+            </form>
+        </div>
+    </div>
+    <!-- Modal pour sélectionner le type de patrimoine culturel -->
+    <div id="selectTypeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeSelectTypeModal">&times;</span>
+            <h2>Sélectionner le type de patrimoine culturel</h2>
+            <select id="typePatrimoineSelect">
+                <option value="cuisine">Cuisine</option>
+                <option value="histoire">Histoire</option>
+                <option value="personnalite">Personnalité</option>
+                <option value="musique">Musique</option>
+            </select>
+            <button id="confirmTypeButton">Confirmer</button>
+        </div>
+    </div>
     <script src="{{ url_for('static', filename='js/script_map.js') }}"></script>
 </body>
 </html>

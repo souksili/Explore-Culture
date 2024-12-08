@@ -100,6 +100,7 @@ class Zone(db.Model):
     taille = db.Column(db.Integer, nullable=False)
     couleur = db.Column(db.String(7), nullable=False)
     date_ajout = db.Column(db.DateTime, default=datetime.utcnow)
+    patrimoines = db.relationship('PatrimoineCulturel', backref='zone', lazy=True)
 
     def to_dict(self):
         return {
@@ -111,14 +112,106 @@ class Zone(db.Model):
             "taille": self.taille,
             "couleur": self.couleur,
             "date_ajout": self.date_ajout.isoformat(),
+            "patrimoines": [patrimoine.to_dict() for patrimoine in self.patrimoines]
+        }
+
+class PatrimoineCulturel(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    zone_id = db.Column(db.Integer, db.ForeignKey('zone.id'), nullable=False)
+    type_patrimoine = db.Column(db.String(100), nullable=False)
+    nom = db.Column(db.String(200), nullable=True)
+    lieu = db.Column(db.String(200), nullable=True)
+    importance = db.Column(db.Text, nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    photo_url = db.Column(db.String(200), nullable=True)
+    date_ajout = db.Column(db.DateTime, default=datetime.utcnow)
+
+    cuisine = db.relationship('Cuisine', backref='patrimoine', lazy=True, uselist=False)
+    histoire = db.relationship('Histoire', backref='patrimoine', lazy=True, uselist=False)
+    personnalite = db.relationship('Personnalite', backref='patrimoine', lazy=True, uselist=False)
+    musique = db.relationship('Musique', backref='patrimoine', lazy=True, uselist=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "zone_id": self.zone_id,
+            "type_patrimoine": self.type_patrimoine,
+            "nom": self.nom,
+            "lieu": self.lieu,
+            "importance": self.importance,
+            "description": self.description,
+            "photo_url": self.photo_url,
+            "date_ajout": self.date_ajout.isoformat(),
+            "cuisine": self.cuisine.to_dict() if self.cuisine else None,
+            "histoire": self.histoire.to_dict() if self.histoire else None,
+            "personnalite": self.personnalite.to_dict() if self.personnalite else None,
+            "musique": self.musique.to_dict() if self.musique else None,
+        }
+
+class Cuisine(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    patrimoine_id = db.Column(db.Integer, db.ForeignKey('patrimoine_culturel.id'), nullable=False)
+    recette = db.Column(db.Text, nullable=True)
+    ingredients = db.Column(db.Text, nullable=True)
+    temps_preparation = db.Column(db.String(50), nullable=True)
+
+    def to_dict(self):
+        return {
+            "recette": self.recette,
+            "ingredients": self.ingredients,
+            "temps_preparation": self.temps_preparation,
+        }
+
+class Histoire(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    patrimoine_id = db.Column(db.Integer, db.ForeignKey('patrimoine_culturel.id'), nullable=False)
+    evenement = db.Column(db.String(200), nullable=True)
+    date_evenement = db.Column(db.String(50), nullable=True)
+    personnages_cles = db.Column(db.Text, nullable=True)
+
+    def to_dict(self):
+        return {
+            "evenement": self.evenement,
+            "date_evenement": self.date_evenement,
+            "personnages_cles": self.personnages_cles,
+        }
+
+class Personnalite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    patrimoine_id = db.Column(db.Integer, db.ForeignKey('patrimoine_culturel.id'), nullable=False)
+    nom_personnalite = db.Column(db.String(200), nullable=True)
+    biographie = db.Column(db.Text, nullable=True)
+    contributions = db.Column(db.Text, nullable=True)
+
+    def to_dict(self):
+        return {
+            "nom_personnalite": self.nom_personnalite,
+            "biographie": self.biographie,
+            "contributions": self.contributions,
+        }
+
+class Musique(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    patrimoine_id = db.Column(db.Integer, db.ForeignKey('patrimoine_culturel.id'), nullable=False)
+    titre_musique = db.Column(db.String(200), nullable=True)
+    artiste = db.Column(db.String(200), nullable=True)
+    genre = db.Column(db.String(100), nullable=True)
+    lien_musique = db.Column(db.String(200), nullable=True)
+
+    def to_dict(self):
+        return {
+            "titre_musique": self.titre_musique,
+            "artiste": self.artiste,
+            "genre": self.genre,
+            "lien_musique": self.lien_musique,
         }
 
 def send_email(recipient, subject, body):
     try:
-        smtp_server = os.getenv('MAIL_SERVER')
-        smtp_port = int(os.getenv('MAIL_PORT'))
-        smtp_username = os.getenv('SMTP_USERNAME')
-        smtp_password = os.getenv('SMTP_PASSWORD')
+        smtp_server = app.config['MAIL_SERVER']
+        smtp_port = app.config['MAIL_PORT']
+        smtp_username = app.config['MAIL_USERNAME']
+        smtp_password = app.config['MAIL_PASSWORD']
 
         if not smtp_password:
             logging.error("SMTP_PASSWORD is not set or is empty!")
@@ -172,6 +265,10 @@ def dashboard_page():
 def editer_profil_page():
     logging.info("Route /editer_profil appelée")
     return render_template('editer_profil.html')
+
+@app.route('/discover', methods=['GET'])
+def discover_page():
+    return render_template('discover.html')
 
 @app.route('/api/zones', methods=['POST'])
 @jwt_required()
@@ -262,14 +359,14 @@ def inscription():
         subject = "Confirmation d'inscription"
         body = (
             f"Bonjour {nom_utilisateur},\n\n"
-            f"Votre inscription a ete reussie sur Explore Culture !\n\n"
+            f"Votre inscription a été réussie sur Explore Culture !\n\n"
             f"Merci pour votre inscription.\n\n"
-            f"Cordialement,\nL'equipe Explore Culture."
+            f"Cordialement,\nL'équipe Explore Culture."
         )
 
         send_email(recipient=email, subject=subject, body=body)
         logging.info(f"Inscription réussie pour {email}")
-        return jsonify({"message": "Inscription reussie, email de confirmation envoye."}), 201
+        return jsonify({"message": "Inscription réussie, email de confirmation envoyé."}), 201
     except Exception as e:
         logging.error(f"Erreur lors de l'inscription : {e}")
         return jsonify({"message": "Une erreur est survenue lors de l'inscription"}), 500
@@ -320,18 +417,18 @@ def recuperation_mdp():
             logging.warning(f"Utilisateur non trouvé pour la récupération de mot de passe : {email}")
             return jsonify({"message": "Utilisateur non trouvé"}), 404
 
-        subject = "Reinitialisation de votre mot de passe"
+        subject = "Réinitialisation de votre mot de passe"
         reset_link = f"http://votreurl.com/reset_password/{email}"
         body = (
             f"Bonjour,\n\n"
-            f"Cliquez sur ce lien pour reinitialiser votre mot de passe :\n{reset_link}\n\n"
-            "Si vous n'avez pas demande cette reinitialisation, veuillez ignorer cet e-mail.\n\n"
-            "Cordialement,\nL'equipe Explore Culture."
+            f"Cliquez sur ce lien pour réinitialiser votre mot de passe :\n{reset_link}\n\n"
+            "Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail.\n\n"
+            "Cordialement,\nL'équipe Explore Culture."
         )
 
         send_email(recipient=email, subject=subject, body=body)
         logging.info(f"Lien de réinitialisation de mot de passe envoyé à {email}")
-        return jsonify({"message": "Lien de reinitialisation envoye par email."}), 200
+        return jsonify({"message": "Lien de réinitialisation envoyé par email."}), 200
     except Exception as e:
         logging.error(f"Erreur lors de la récupération de mot de passe : {e}")
         return jsonify({"message": "Une erreur est survenue"}), 500
@@ -561,6 +658,291 @@ def editer_profil():
     except Exception as e:
         logging.error(f"Erreur lors de la mise à jour du profil : {e}")
         return jsonify({"message": "Une erreur est survenue lors de la mise à jour du profil"}), 500
+
+@app.route('/api/zones/<int:zone_id>/patrimoines', methods=['POST'])
+@jwt_required()
+def ajouter_patrimoine(zone_id):
+    try:
+        logging.info(f"Route /api/zones/{zone_id}/patrimoines (POST) appelée")
+        data = request.get_json()
+        type_patrimoine = data.get('type_patrimoine')
+        nom = data.get('nom')
+        lieu = data.get('lieu')
+        importance = data.get('importance')
+        description = data.get('description')
+        photo_url = data.get('photo_url')
+
+        valid_types = ["cuisine", "histoire", "personnalité", "musique"]
+        if type_patrimoine not in valid_types:
+            logging.error(f"Type de patrimoine invalide : {type_patrimoine}")
+            return jsonify({"message": "Type de patrimoine invalide"}), 400
+
+        patrimoine = PatrimoineCulturel(
+            zone_id=zone_id,
+            type_patrimoine=type_patrimoine,
+            nom=nom,
+            lieu=lieu,
+            importance=importance,
+            description=description,
+            photo_url=photo_url
+        )
+        db.session.add(patrimoine)
+        db.session.commit()
+
+        if type_patrimoine == "cuisine":
+            recette = data.get('recette')
+            ingredients = data.get('ingredients')
+            temps_preparation = data.get('temps_preparation')
+            cuisine = Cuisine(
+                patrimoine_id=patrimoine.id,
+                recette=recette,
+                ingredients=ingredients,
+                temps_preparation=temps_preparation
+            )
+            db.session.add(cuisine)
+        elif type_patrimoine == "histoire":
+            evenement = data.get('evenement')
+            date_evenement = data.get('date_evenement')
+            personnages_cles = data.get('personnages_cles')
+            histoire = Histoire(
+                patrimoine_id=patrimoine.id,
+                evenement=evenement,
+                date_evenement=date_evenement,
+                personnages_cles=personnages_cles
+            )
+            db.session.add(histoire)
+        elif type_patrimoine == "personnalité":
+            nom_personnalite = data.get('nom_personnalite')
+            biographie = data.get('biographie')
+            contributions = data.get('contributions')
+            personnalite = Personnalite(
+                patrimoine_id=patrimoine.id,
+                nom_personnalite=nom_personnalite,
+                biographie=biographie,
+                contributions=contributions
+            )
+            db.session.add(personnalite)
+        elif type_patrimoine == "musique":
+            titre_musique = data.get('titre_musique')
+            artiste = data.get('artiste')
+            genre = data.get('genre')
+            lien_musique = data.get('lien_musique')
+            musique = Musique(
+                patrimoine_id=patrimoine.id,
+                titre_musique=titre_musique,
+                artiste=artiste,
+                genre=genre,
+                lien_musique=lien_musique
+            )
+            db.session.add(musique)
+
+        db.session.commit()
+
+        logging.info(f"Patrimoine culturel ajouté pour la zone {zone_id}")
+        return jsonify({"message": "Patrimoine culturel ajouté."}), 201
+    except Exception as e:
+        logging.error(f"Erreur lors de l'ajout du patrimoine culturel : {e}")
+        return jsonify({"message": "Une erreur est survenue."}), 500
+
+@app.route('/api/zones/<int:zone_id>/patrimoines', methods=['GET'])
+@jwt_required()
+def recuperer_patrimoines(zone_id):
+    try:
+        logging.info(f"Route /api/zones/{zone_id}/patrimoines (GET) appelée")
+        patrimoines = PatrimoineCulturel.query.filter_by(zone_id=zone_id).all()
+        if not patrimoines:
+            logging.info("Aucun patrimoine culturel trouvé pour cette zone.")
+            return jsonify([]), 200
+
+        patrimoines_dict = [patrimoine.to_dict() for patrimoine in patrimoines]
+
+        logging.info(f"Patrimoines culturels récupérés: {patrimoines_dict}")
+        return jsonify(patrimoines_dict), 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération des patrimoines culturels : {e}")
+        return jsonify({"message": "Une erreur est survenue lors de la récupération des patrimoines culturels"}), 500
+
+@app.route('/api/zones/<int:zone_id>/patrimoines/<int:patrimoine_id>', methods=['DELETE'])
+@jwt_required()
+def supprimer_patrimoine(zone_id, patrimoine_id):
+    try:
+        logging.info(f"Route /api/zones/{zone_id}/patrimoines/{patrimoine_id} (DELETE) appelée")
+        patrimoine = PatrimoineCulturel.query.get(patrimoine_id)
+        if not patrimoine or patrimoine.zone_id != zone_id:
+            logging.warning(f"Patrimoine culturel non trouvé ou ne correspond pas à la zone {zone_id}")
+            return jsonify({"message": "Patrimoine culturel non trouvé"}), 404
+
+        db.session.delete(patrimoine)
+        db.session.commit()
+
+        logging.info(f"Patrimoine culturel {patrimoine_id} supprimé pour la zone {zone_id}")
+        return jsonify({"message": "Patrimoine culturel supprimé."}), 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la suppression du patrimoine culturel : {e}")
+        return jsonify({"message": "Une erreur est survenue."}), 500
+
+@app.route('/api/zones/<int:zone_id>/all', methods=['GET'])
+@jwt_required()
+def recuperer_toutes_donnees_par_zone(zone_id):
+    try:
+        logging.info(f"Route /api/zones/{zone_id}/all (GET) appelée")
+        utilisateur_id = get_jwt_identity()
+
+        zone = Zone.query.filter_by(id=zone_id, utilisateur_id=utilisateur_id).first()
+        if not zone:
+            logging.warning(f"Zone {zone_id} non trouvée ou n'appartient pas à l'utilisateur {utilisateur_id}")
+            return jsonify({"message": "Zone non trouvée ou non autorisée"}), 404
+
+        histoires = Histoire.query.join(PatrimoineCulturel).filter(PatrimoineCulturel.zone_id == zone_id).all()
+        musiques = Musique.query.join(PatrimoineCulturel).filter(PatrimoineCulturel.zone_id == zone_id).all()
+        cuisines = Cuisine.query.join(PatrimoineCulturel).filter(PatrimoineCulturel.zone_id == zone_id).all()
+        personnalites = Personnalite.query.join(PatrimoineCulturel).filter(PatrimoineCulturel.zone_id == zone_id).all()
+
+        data = {
+            "histoire": [histoire.to_dict() for histoire in histoires],
+            "musique": [musique.to_dict() for musique in musiques],
+            "cuisine": [cuisine.to_dict() for cuisine in cuisines],
+            "personnalite": [personnalite.to_dict() for personnalite in personnalites]
+        }
+
+        print(f"Données récupérées pour la zone {zone_id}: {data}")
+        return jsonify(data), 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération des données pour la zone {zone_id} : {e}")
+        return jsonify({"message": "Une erreur est survenue lors de la récupération des données"}), 500
+
+
+@app.route('/api/qcm/<int:zone_id>', methods=['GET'])
+@jwt_required()
+def recuperer_qcm(zone_id):
+    try:
+        logging.info(f"Route /api/qcm/{zone_id} (GET) appelée")
+        utilisateur_id = get_jwt_identity()
+
+        zone = Zone.query.filter_by(id=zone_id, utilisateur_id=utilisateur_id).first()
+        if not zone:
+            logging.warning(f"Zone {zone_id} non trouvée ou n'appartient pas à l'utilisateur {utilisateur_id}")
+            return jsonify({"message": "Zone non trouvée ou non autorisée"}), 404
+
+        patrimoines = PatrimoineCulturel.query.filter_by(zone_id=zone_id).all()
+
+        data = {
+            "histoire": [],
+            "musique": [],
+            "cuisine": [],
+            "personnalite": []
+        }
+
+        for patrimoine in patrimoines:
+            if patrimoine.histoire:
+                data["histoire"].append(patrimoine.histoire.to_dict())
+            if patrimoine.musique:
+                data["musique"].append(patrimoine.musique.to_dict())
+            if patrimoine.cuisine:
+                data["cuisine"].append(patrimoine.cuisine.to_dict())
+            if patrimoine.personnalite:
+                data["personnalite"].append(patrimoine.personnalite.to_dict())
+
+        qcm_data = generate_qcm_with_mistral(data)
+
+        logging.info(f"QCM généré pour la zone {zone_id}: {qcm_data}")
+        return jsonify(qcm_data), 200
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération des QCM pour la zone {zone_id} : {e}")
+        return jsonify({"message": "Une erreur est survenue lors de la récupération des QCM"}), 500
+
+def generate_qcm_with_mistral(data):
+    try:
+        logging.info(f"Génération de QCM avec Mistral pour les données : {data}")
+
+        instructions = []
+        if data["histoire"]:
+            instructions.append("Générez une question sur les événements historique. La réponse correcte doit être placée de manière aléatoire parmi les options.")
+        else:
+            instructions.append("ne Générez pas")
+
+        if data["cuisine"]:
+            instructions.append("Générez une question sur le plats traditionnels. La réponse correcte doit être placée de manière aléatoire parmi les options.")
+        else:
+            instructions.append("ne Générez pas")
+
+        if data["musique"]:
+            instructions.append("Générez moi une question sur les musiciens. La réponse correcte doit être placée de manière aléatoire parmi les options.")
+        else:
+            instructions.append("ne Générez pas")
+
+        if data["personnalite"]:
+            instructions.append("Générez une question sur les personnalités. La réponse correcte doit être placée de manière aléatoire parmi les options.")
+        else:
+            instructions.append("ne Générez pas")
+
+        messages = [
+            {
+                "role": "user",
+                "content": (
+                    f"Bonjour, générez un QCM basé sur les données suivantes : {json.dumps(data)}. "
+                    f"Le format du QCM doit être le suivant : {json.dumps(QCM_FORMAT)}. "
+                    f"Pour chaque question, générez des options de réponse concrètes basées sur les données fournies. "
+                    f"Assurez-vous que chaque question a une réponse correcte et trois réponses incorrectes. "
+                    f"Instructions spécifiques : {' '.join(instructions)}"
+                )
+            }
+        ]
+
+        chat_response = client.chat.complete(
+            model=model,
+            messages=messages,
+            response_format={"type": "json_object"}
+        )
+
+        if chat_response.choices and chat_response.choices[0].message.content:
+            return json.loads(chat_response.choices[0].message.content)
+        else:
+            return []
+    except Exception as e:
+        logging.error(f"Erreur lors de la génération de QCM avec Mistral : {e}")
+        return []
+
+QCM_FORMAT = {
+    "questions": [
+        {
+            "question": ".....?",
+            "options": [
+                {"text": "Option 1", "correct": False},
+                {"text": "Option 2", "correct": False},
+                {"text": "Option 3", "correct": True},
+                {"text": "Option 4", "correct": False}
+            ]
+        },
+        {
+            "question": "...?",
+            "options": [
+                {"text": "Option 1", "correct": False},
+                {"text": "Option 2", "correct": False},
+                {"text": "Option 3", "correct": True},
+                {"text": "Option 4", "correct": False}
+            ]
+        },
+        {
+            "question": "....?",
+            "options": [
+                {"text": "Option 1", "correct": False},
+                {"text": "Option 2", "correct": False},
+                {"text": "Option 3", "correct": True},
+                {"text": "Option 4", "correct": False}
+            ]
+        },
+        {
+            "question": ".....?",
+            "options": [
+                {"text": "Option 1", "correct": False},
+                {"text": "Option 2", "correct": False},
+                {"text": "Option 3", "correct": True},
+                {"text": "Option 4", "correct": False}
+            ]
+        }
+    ]
+}
 
 if __name__ == '__main__':
     with app.app_context():

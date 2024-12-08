@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wizard Navigation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom, #1e3c72, #2a5298);
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wizard {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .wizard button {
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: none;
+            background: #f8f9fa;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wizard button.active {
+            background: linear-gradient(to right, #f12711, #f5af19);
+            color: #fff;
+        }
+
+        .wizard button:hover {
+            transform: scale(1.05);
+        }
+
+        .wizard button.disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .content-wrapper {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .section-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .section-card {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            color: #333;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .section-card h3 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #f12711;
+        }
+
+        .section-card p {
+            font-size: 0.9rem;
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .content-wrapper button {
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: none;
+            background: linear-gradient(to right, #56ab2f, #a8e063);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .content-wrapper button:hover {
+            background: linear-gradient(to right, #a8e063, #56ab2f);
+            transform: scale(1.05);
+        }
+
+        .progress-bar {
+            width: 100%;
+            background: #fff;
+            border-radius: 30px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-bar .progress {
+            height: 10px;
+            background: linear-gradient(to right, #f12711, #f5af19);
+            width: 0;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .back-button {
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .quiz-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .quiz-question {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            color: #333;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .quiz-question h3 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #f12711;
+        }
+
+        .quiz-question p {
+            font-size: 0.9rem;
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .quiz-option {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .quiz-option:hover {
+            background: #e9ecef;
+        }
+
+        .quiz-option.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .quiz-option.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .losing-icon {
+            font-size: 50px;
+            color: red;
+        }
+
+        #fireworks {
+            position: relative;
+            width: 100%;
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wizard">
+        <button onclick="navigateTo('Cuisine')" id="cuisineBtn" class="active">
+            <i class="fas fa-utensils"></i> Cuisine
+        </button>
+        <button onclick="navigateTo('Histoire')" id="histoireBtn" class="disabled">
+            <i class="fas fa-history"></i> Histoire
+        </button>
+        <button onclick="navigateTo('Personnalité')" id="personnaliteBtn" class="disabled">
+            <i class="fas fa-user"></i> Personnalité
+        </button>
+        <button onclick="navigateTo('Musique')" id="musiqueBtn" class="disabled">
+            <i class="fas fa-music"></i> Musique
+        </button>
+        <button onclick="navigateTo('Quiz')" id="quizBtn" class="disabled">
+            <i class="fas fa-question"></i> Quiz
+        </button>
+    </div>
+
+    <div class="content-wrapper" id="content">
+        <button class="back-button" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i> Retour
+        </button>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <h2 id="sectionTitle">Cuisine</h2>
+        <div id="sectionContent" class="section-container">
+        </div>
+        <button onclick="completeSection()">Terminer cette section</button>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <div id="modal-message"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fireworks-js@2.0.0/dist/fireworks.min.js"></script>
+
+    <script>
+        let currentSectionIndex = 0;
+        let completedSections = [];
+        const sectionOrder = ['Cuisine', 'Histoire', 'Personnalité', 'Musique', 'Quiz'];
+        let zoneId = null;
+        let quizScore = 0;
+        let totalQuestions = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const accessToken = localStorage.getItem('accessToken');
+            if (!accessToken) {
+                window.location.href = '/connexion';
+                return;
+            }
+
+            fetchZonesFromLocalStorage();
+            fetchSectionData('Cuisine');
+        });
+
+        function navigateTo(section) {
+            const sectionIndex = sectionOrder.indexOf(section);
+            if (sectionIndex < 0 || sectionIndex > currentSectionIndex && !completedSections.includes(section)) {
+                alert('Veuillez terminer les étapes précédentes.');
+                return;
+            }
+
+            currentSectionIndex = sectionIndex;
+            document.getElementById('sectionTitle').textContent = section;
+            fetchSectionData(section);
+            updateButtons();
+            updateProgressBar();
+        }
+
+        function completeSection() {
+            const section = sectionOrder[currentSectionIndex];
+            if (!completedSections.includes(section)) {
+                completedSections.push(section);
+                alert(`Section ${section} terminée.`);
+            }
+            if (currentSectionIndex < sectionOrder.length - 1) {
+                currentSectionIndex++;
+                navigateTo(sectionOrder[currentSectionIndex]);
+            }
+            updateButtons();
+            updateProgressBar();
+        }
+
+        function updateButtons() {
+            const buttons = document.querySelectorAll('.wizard button');
+            buttons.forEach((button, index) => {
+                button.classList.toggle('active', index === currentSectionIndex);
+                button.classList.toggle('disabled', index > currentSectionIndex && !completedSections.includes(sectionOrder[index]));
+            });
+            document.querySelector('.back-button').style.display = currentSectionIndex > 0 ? 'block' : 'none';
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentSectionIndex + 1) / sectionOrder.length) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function fetchSectionData(section) {
+            const accessToken = localStorage.getItem('accessToken');
+            if (section === 'Quiz') {
+                fetch(`/api/qcm/${zoneId}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.questions) {
+                        document.getElementById('sectionContent').innerHTML = formatQuizData(data.questions);
+                    } else {
+                        document.getElementById('sectionContent').innerHTML = 'Aucune donnée disponible.';
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    document.getElementById('sectionContent').innerHTML = 'Erreur de chargement.';
+                });
+            } else {
+                fetch(`/api/zones/${zoneId}/all`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data[section.toLowerCase()]) {
+                        switch (section) {
+                            case 'Cuisine':
+                                document.getElementById('sectionContent').innerHTML = formatCuisineData(data.cuisine);
+                                break;
+                            case 'Histoire':
+                                document.getElementById('sectionContent').innerHTML = formatHistoireData(data.histoire);
+                                break;
+                            case 'Personnalité':
+                                document.getElementById('sectionContent').innerHTML = formatPersonnaliteData(data.personnalite);
+                                break;
+                            case 'Musique':
+                                document.getElementById('sectionContent').innerHTML = formatMusiqueData(data.musique);
+                                break;
+                            default:
+                                document.getElementById('sectionContent').innerHTML = 'Aucune donnée disponible.';
+                        }
+                    } else {
+                        document.getElementById('sectionContent').innerHTML = 'Aucune donnée disponible.';
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    document.getElementById('sectionContent').innerHTML = 'Erreur de chargement.';
+                });
+            }
+        }
+
+        function formatCuisineData(data) {
+            return data.map(item => `
+                <div class="section-card">
+                    <p><strong>Recette:</strong> ${item.recette || 'Non spécifié'}</p>
+                    <p><strong>Ingrédients:</strong> ${item.ingredients || 'Non spécifiés'}</p>
+                    <p><strong>Temps de préparation:</strong> ${item.temps_preparation || 'Non spécifié'}</p>
+                </div>
+            `).join('');
+        }
+
+        function formatHistoireData(data) {
+            return data.map(item => `
+                <div class="section-card">
+                    <h3>${item.evenement || 'Événement inconnu'}</h3>
+                    <p><strong>Date de l'événement:</strong> ${item.date_evenement || 'Non spécifiée'}</p>
+                    <p><strong>Personnages clés:</strong> ${item.personnages_cles || 'Non spécifiés'}</p>
+                </div>
+            `).join('');
+        }
+
+        function formatPersonnaliteData(data) {
+            return data.map(item => `
+                <div class="section-card">
+                    <h3>${item.nom_personnalite || 'Nom inconnu'}</h3>
+                    <p><strong>Biographie:</strong> ${item.biographie || 'Non spécifiée'}</p>
+                    <p><strong>Contributions:</strong> ${item.contributions || 'Non spécifiées'}</p>
+                </div>
+            `).join('');
+        }
+
+        function formatMusiqueData(data) {
+            return data.map(item => `
+                <div class="section-card">
+                    <h3>${item.titre_musique || 'Titre inconnu'}</h3>
+                    <p><strong>Artiste:</strong> ${item.artiste || 'Non spécifié'}</p>
+                    <p><strong>Genre:</strong> ${item.genre || 'Non spécifié'}</p>
+                    <p><strong>Lien:</strong> <a href="${item.lien_musique || '#'}" target="_blank">Écouter</a></p>
+                </div>
+            `).join('');
+        }
+
+        function formatQuizData(data) {
+            return data.map(question => `
+                <div class="quiz-question">
+                    <h3>${question.question}</h3>
+                    <div class="quiz-options">
+                        ${question.options.map(option => `
+                            <div class="quiz-option" onclick="checkAnswer(this, ${option.correct})">
+                                ${option.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function checkAnswer(element, isCorrect) {
+            if (isCorrect) {
+                element.classList.add('correct');
+                quizScore++;
+            } else {
+                element.classList.add('incorrect');
+            }
+            totalQuestions++;
+            if (totalQuestions === document.querySelectorAll('.quiz-question').length) {
+                showQuizResult();
+            }
+        }
+
+        function showQuizResult() {
+            const percentage = (quizScore / totalQuestions) * 100;
+            const modalMessage = document.getElementById('modal-message');
+
+            if (percentage >= 80) {
+                modalMessage.innerHTML = `<div id="fireworks"></div><p>Bravo ! Vous avez réussi le quiz avec un score de ${percentage}%.</p>`;
+                startFireworks();
+            } else {
+                modalMessage.innerHTML = `<i class="fas fa-times-circle losing-icon"></i><p>Pas de chance. Veuillez relire les sections de la zone bien comme il faut.</p>`;
+            }
+
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function startFireworks() {
+            if (typeof Fireworks !== 'undefined') {
+                const fireworks = new Fireworks(document.getElementById('fireworks'), {
+                    hue: { min: 0, max: 360 },
+                    delay: { min: 15, max: 30 },
+                    rocketsPoint: 50,
+                    speed: 2,
+                    acceleration: 1.05,
+                    friction: 0.99,
+                    gravity: 1.5,
+                    particles: 50,
+                    trace: 3,
+                    explosion: 5,
+                    autoresize: true,
+                    boundaries: {
+                        top: 50,
+                        bottom: 50,
+                        left: 50,
+                        right: 50
+                    },
+                    sound: {
+                        enable: true,
+                        files: ['sound1.mp3', 'sound2.mp3', 'sound3.mp3'],
+                        volume: { min: 5, max: 25 }
+                    }
+                });
+                fireworks.start();
+            } else {
+                console.error('Fireworks library is not loaded.');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function fetchZonesFromLocalStorage() {
+            zoneId = localStorage.getItem('zoneId');
+            if (!zoneId) fetch('/api/zones').then(res => res.json()).then(zones => zoneId = zones[0].id);
+        }
+
+        function goBack() {
+            if (currentSectionIndex > 0) {
+                navigateTo(sectionOrder[currentSectionIndex - 1]);
+            }
+        }
+    </script>
+</body>
+</html>

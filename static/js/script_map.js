@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.est_admin) {
+            userRole = data.est_admin; // Stocker le rôle de l'utilisateur
+            if (userRole) {
                 document.getElementById('addZoneButton').style.display = 'inline-block';
             }
         })
@@ -35,6 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Récupérer et afficher les zones
         fetchZonesFromServer();
+
+        // Vérifier les trajets et désactiver le bouton si nécessaire
+        const startButton = document.getElementById('startButton');
+        if (startButton) {
+            startButton.disabled = true; // Désactiver le bouton par défaut
+        }
     }
 });
 
@@ -79,6 +86,26 @@ document.getElementById('confirmDeleteButton').addEventListener('click', () => {
 document.getElementById('closeAddZoneModal').addEventListener('click', () => {
     const addZoneModal = document.getElementById('addZoneModal');
     addZoneModal.style.display = 'none';
+});
+
+document.getElementById('closeAddCuisineModal').addEventListener('click', () => {
+    const addCuisineModal = document.getElementById('addCuisineModal');
+    addCuisineModal.style.display = 'none';
+});
+
+document.getElementById('closeAddHistoireModal').addEventListener('click', () => {
+    const addHistoireModal = document.getElementById('addHistoireModal');
+    addHistoireModal.style.display = 'none';
+});
+
+document.getElementById('closeAddPersonnaliteModal').addEventListener('click', () => {
+    const addPersonnaliteModal = document.getElementById('addPersonnaliteModal');
+    addPersonnaliteModal.style.display = 'none';
+});
+
+document.getElementById('closeAddMusiqueModal').addEventListener('click', () => {
+    const addMusiqueModal = document.getElementById('addMusiqueModal');
+    addMusiqueModal.style.display = 'none';
 });
 
 document.getElementById('size').addEventListener('input', (event) => {
@@ -154,11 +181,19 @@ document.getElementById('addZoneForm').addEventListener('submit', (event) => {
                 .then(response => response.json())
                 .then(data => {
                     if (data.message === "Zone ajoutée.") {
-                        addZoneToMap(lat, lon, size, color, address, description);
+                        const newZone = {
+                            _leaflet_id: data.zone_id,
+                            latitude: lat,
+                            longitude: lon,
+                            taille: size,
+                            couleur: color,
+                            nom: address,
+                            description: description
+                        };
+                        addZoneToMap(newZone.latitude, newZone.longitude, newZone.taille, newZone.couleur, newZone.nom, newZone.description, newZone._leaflet_id);
+                        zones.push(newZone);
                         const addZoneModal = document.getElementById('addZoneModal');
                         addZoneModal.style.display = 'none';
-                        // Récupérer et afficher les zones après l'ajout
-                        fetchZonesFromServer();
                     } else {
                         alert('Erreur lors de l\'ajout de la zone');
                     }
@@ -184,14 +219,54 @@ function getRandomColor() {
     return color;
 }
 
-function addZoneToMap(lat, lon, size, color, title, description) {
-    L.circle([lat, lon], {
+function addZoneToMap(lat, lon, size, color, title, description, zoneId) {
+    const zone = L.circle([lat, lon], {
         color: color,
         fillColor: color,
         fillOpacity: 0.5,
         radius: size
     }).addTo(map).bindPopup(`<b>${title}</b><br>${description}`);
+
+    // Ajouter une icône ou un signe "+" au centre de la zone uniquement pour les administrateurs
+    if (userRole) {
+        const icon = L.divIcon({
+            className: 'zone-icon',
+            html: '<div style="font-size: 24px; color: white;">+</div>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+
+        const marker = L.marker([lat, lon], { icon: icon }).addTo(map);
+        marker.zoneId = zoneId; // Stocker l'ID de la zone dans un attribut du marqueur
+
+        marker.on('click', () => {
+            const selectTypeModal = document.getElementById('selectTypeModal');
+            selectTypeModal.style.display = 'flex';
+            document.getElementById('confirmTypeButton').setAttribute('data-zone-id', marker.zoneId);
+        });
+    }
 }
+
+document.getElementById('closeSelectTypeModal').addEventListener('click', () => {
+    const selectTypeModal = document.getElementById('selectTypeModal');
+    selectTypeModal.style.display = 'none';
+});
+
+document.getElementById('confirmTypeButton').addEventListener('click', () => {
+    const typePatrimoine = document.getElementById('typePatrimoineSelect').value;
+    const zoneId = document.getElementById('confirmTypeButton').getAttribute('data-zone-id');
+    const selectTypeModal = document.getElementById('selectTypeModal');
+    selectTypeModal.style.display = 'none';
+
+    const modalId = `add${typePatrimoine.charAt(0).toUpperCase() + typePatrimoine.slice(1)}Modal`;
+    const addPatrimoineModal = document.getElementById(modalId);
+    if (addPatrimoineModal) {
+        addPatrimoineModal.style.display = 'flex';
+        document.getElementById(`add${typePatrimoine.charAt(0).toUpperCase() + typePatrimoine.slice(1)}Form`).setAttribute('data-zone-id', zoneId);
+    } else {
+        alert('Type de patrimoine non reconnu.');
+    }
+});
 
 function getAddressFromCoordinates(position) {
     const { latitude, longitude } = position.coords;
@@ -235,7 +310,30 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
+// Ajouter du CSS pour styliser l'icône
+const style = document.createElement('style');
+style.innerHTML = `
+    .zone-icon div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        cursor: pointer;
+    }
+`;
+document.head.appendChild(style);
+
 let routeControl;
+let zones = [];
+let visitedZones = new Set(); // Tableau pour suivre les zones visitées
+let currentIndex = 0;
+let interval;
+let routeCoordinates = [];
+let animatedMarker;
+let isPaused = false; // Variable pour suivre si l'animation est en pause
 
 // Gestion des waypoints et de la navigation
 function initializeWaypoints(addresses) {
@@ -259,27 +357,68 @@ function initializeWaypoints(addresses) {
 
     routeControl = L.Routing.control({ waypoints, createMarker: () => null }).addTo(map);
 
-    const animatedMarker = L.marker([0, 0], { icon: L.divIcon({ className: 'emoji-marker', html: '🚗' }) }).addTo(map);
-    const startButton = document.getElementById('startButton');
+    animatedMarker = L.marker([0, 0], { icon: L.divIcon({ className: 'emoji-marker', html: '🚗' }) }).addTo(map);
+    const pauseResumeButton = document.getElementById('pauseResumeButton');
     const toggleInstructions = document.getElementById('toggleInstructions');
 
     let instructionsVisible = true;
 
     routeControl.on('routesfound', ({ routes }) => {
-        const routeCoordinates = routes[0].coordinates;
-        startButton.disabled = routeCoordinates.length === 0;
+        routeCoordinates = routes[0].coordinates;
+        const startButton = document.getElementById('startButton');
+        startButton.disabled = routeCoordinates.length === 0; // Désactiver le bouton si aucun trajet n'est trouvé
 
         startButton.addEventListener('click', () => {
-            let index = 0;
-            const interval = setInterval(() => {
-                if (index < routeCoordinates.length) {
-                    animatedMarker.setLatLng(routeCoordinates[index]);
-                    index++;
-                } else {
+            currentIndex = 0;
+            isPaused = false; // Réinitialiser la variable de pause
+            if (interval) clearInterval(interval); // Arrêter l'intervalle précédent
+            interval = setInterval(() => {
+                if (!isPaused && currentIndex < routeCoordinates.length) {
+                    animatedMarker.setLatLng(routeCoordinates[currentIndex]);
+                    const zone = isInsideZone(routeCoordinates[currentIndex], zones);
+                    if (zone && !visitedZones.has(zone.nom)) {
+                        isPaused = true; // Mettre en pause l'animation
+                        clearInterval(interval);
+                        showPauseModal(zone, routeCoordinates, currentIndex);
+                        visitedZones.add(zone.nom); // Ajouter la zone aux zones visitées
+                    }
+                    currentIndex++;
+                } else if (currentIndex >= routeCoordinates.length) {
                     clearInterval(interval);
                     showEndTripModal();
                 }
             }, 50);
+            startButton.style.display = 'none';
+            pauseResumeButton.style.display = 'inline-block';
+        });
+
+        pauseResumeButton.addEventListener('click', () => {
+            if (isPaused) {
+                // Reprendre l'animation
+                isPaused = false;
+                pauseResumeButton.innerHTML = '<i class="fas fa-pause-circle"></i> Pause';
+                interval = setInterval(() => {
+                    if (!isPaused && currentIndex < routeCoordinates.length) {
+                        animatedMarker.setLatLng(routeCoordinates[currentIndex]);
+                        const zone = isInsideZone(routeCoordinates[currentIndex], zones);
+                        if (zone && !visitedZones.has(zone.nom)) {
+                            isPaused = true; // Mettre en pause l'animation
+                            clearInterval(interval);
+                            showPauseModal(zone, routeCoordinates, currentIndex);
+                            visitedZones.add(zone.nom); // Ajouter la zone aux zones visitées
+                        }
+                        currentIndex++;
+                    } else if (currentIndex >= routeCoordinates.length) {
+                        clearInterval(interval);
+                        showEndTripModal();
+                    }
+                }, 50);
+            } else {
+                // Mettre en pause l'animation
+                isPaused = true;
+                pauseResumeButton.innerHTML = '<i class="fas fa-play-circle"></i> Reprendre';
+                clearInterval(interval);
+            }
         });
 
         toggleInstructions.addEventListener('click', () => {
@@ -321,6 +460,139 @@ function showEndTripModal() {
             alert('Veuillez sélectionner une note avant de soumettre.');
         }
     });
+}
+
+// Ajouter l'événement pour le bouton "Découvrir"
+document.getElementById('discoverButton').addEventListener('click', () => {
+    const zoneId = document.getElementById('discoverButton').getAttribute('data-zone-id');
+    console.log('Zone ID:', zoneId);
+
+    if (zoneId) {
+        localStorage.setItem('zoneId', zoneId);
+    }
+
+    if (zoneId) {
+        const iframe = document.createElement('iframe');
+        iframe.src = `discover?zoneId=${zoneId}`;
+        iframe.style.width = '100%';
+        iframe.style.height = '500px';
+        iframe.style.border = 'none';
+
+        const modalContent = document.getElementById('pauseModal').querySelector('.modal-content');
+        if (modalContent) {
+            // Nettoyer le contenu précédent
+            modalContent.innerHTML = '';
+
+            // Ajouter l'iframe au contenu du modal
+            modalContent.appendChild(iframe);
+
+            // Masquer les boutons inutiles
+            const continueButton = document.getElementById('continueButton');
+            const discoverButton = document.getElementById('discoverButton');
+            if (continueButton) continueButton.style.display = 'none';
+            if (discoverButton) discoverButton.style.display = 'none';
+
+            // Masquer le titre et le message
+            const zoneDetectedTitle = document.getElementById('zoneDetectedTitle');
+            const zoneDetectedMessage = document.getElementById('zoneDetectedMessage');
+            if (zoneDetectedTitle) zoneDetectedTitle.style.display = 'none';
+            if (zoneDetectedMessage) zoneDetectedMessage.style.display = 'none';
+
+            // Ajouter un gestionnaire d'événements pour le bouton de fermeture existant
+            const closeButton = document.getElementById('closePauseModal');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    const modal = document.getElementById('pauseModal');
+                    if (modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+
+            // Ajouter un bouton de fermeture à l'iframe
+            const closeIframeButton = document.createElement('button');
+            closeIframeButton.textContent = 'Fermer';
+            closeIframeButton.style.position = 'absolute';
+            closeIframeButton.style.top = '10px';
+            closeIframeButton.style.right = '10px';
+            closeIframeButton.style.zIndex = '1000';
+            closeIframeButton.style.backgroundColor = 'red';
+            closeIframeButton.style.color = 'white';
+            closeIframeButton.style.border = 'none';
+            closeIframeButton.style.padding = '5px 10px';
+            closeIframeButton.style.cursor = 'pointer';
+
+            // Ajouter le bouton de fermeture à l'iframe
+            modalContent.appendChild(closeIframeButton);
+
+            // Ajouter un gestionnaire d'événements pour le bouton de fermeture
+            closeIframeButton.addEventListener('click', () => {
+                const modal = document.getElementById('pauseModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        } else {
+            console.error('Element with class "modal-content" not found.');
+        }
+    } else {
+        console.error('Zone ID is undefined');
+    }
+});
+
+// Modal de pause
+function showPauseModal(zone, routeCoordinates, currentIndex) {
+    const pauseModal = document.getElementById('pauseModal');
+    if (pauseModal) {
+        pauseModal.style.display = 'flex';
+
+        document.getElementById('closePauseModal').addEventListener('click', () => {
+            pauseModal.style.display = 'none';
+        });
+
+        document.getElementById('continueButton').addEventListener('click', () => {
+            pauseModal.style.display = 'none';
+            // Reprendre l'animation de la voiture à partir de l'endroit où elle s'est arrêtée
+            isPaused = false; // Réinitialiser la variable de pause
+            if (interval) clearInterval(interval); // Arrêter l'intervalle précédent
+            interval = setInterval(() => {
+                if (!isPaused && currentIndex < routeCoordinates.length) {
+                    animatedMarker.setLatLng(routeCoordinates[currentIndex]);
+                    const zone = isInsideZone(routeCoordinates[currentIndex], zones);
+                    if (zone && !visitedZones.has(zone.nom)) {
+                        isPaused = true; // Mettre en pause l'animation
+                        clearInterval(interval);
+                        showPauseModal(zone, routeCoordinates, currentIndex);
+                        visitedZones.add(zone.nom); // Ajouter la zone aux zones visitées
+                    }
+                    currentIndex++;
+                } else if (currentIndex >= routeCoordinates.length) {
+                    clearInterval(interval);
+                    showEndTripModal();
+                }
+            }, 50);
+            // Mettre à jour le bouton de pause/reprise
+            const pauseResumeButton = document.getElementById('pauseResumeButton');
+            pauseResumeButton.innerHTML = '<i class="fas fa-pause-circle"></i> Pause';
+        }, { once: true }); // Assurez-vous que l'événement ne soit ajouté qu'une seule fois
+
+        // Ajouter l'ID de la zone au bouton "Découvrir"
+        const discoverButton = document.getElementById('discoverButton');
+        discoverButton.setAttribute('data-zone-id', zone.id);
+    } else {
+        console.error('Element with id "pauseModal" not found.');
+    }
+}
+
+// Vérifier si la voiture est dans une zone
+function isInsideZone(latLng, zones) {
+    for (const zone of zones) {
+        const distance = L.latLng(latLng).distanceTo(L.latLng(zone.latitude, zone.longitude));
+        if (distance <= zone.taille) {
+            return zone;
+        }
+    }
+    return null;
 }
 
 // Récupération de l'historique depuis la BDD
@@ -371,8 +643,16 @@ function fetchHistoriqueFromServer() {
             const addresses = groupedHistorique[group_id];
             const listItem = document.createElement('li');
             const link = document.createElement('a');
+            const dateAjout = new Date(addresses[0].date_ajout);
+            const formattedDate = dateAjout.toLocaleDateString('fr-FR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
             link.href = '#';
-            link.textContent = `Itinéraire ${group_id}`;
+            link.textContent = `Itinéraire ajouté le ${formattedDate}`;
             link.addEventListener('click', (event) => {
                 event.preventDefault();
                 initializeWaypoints(addresses);
@@ -547,7 +827,8 @@ function fetchZonesFromServer() {
         }
         return response.json();
     })
-    .then(zones => {
+    .then(data => {
+        zones = data;
         if (!Array.isArray(zones)) {
             throw new TypeError('Le format de la réponse est incorrect.');
         }
@@ -561,7 +842,7 @@ function fetchZonesFromServer() {
 
         // Ajouter les nouvelles zones à la carte
         zones.forEach(zone => {
-            addZoneToMap(zone.latitude, zone.longitude, zone.taille, zone.couleur, zone.nom, zone.description);
+            addZoneToMap(zone.latitude, zone.longitude, zone.taille, zone.couleur, zone.nom, zone.description, zone.id);
         });
     })
     .catch(error => {
@@ -571,3 +852,173 @@ function fetchZonesFromServer() {
 
 // Initialisation
 fetchHistoriqueFromServer();
+
+// Gestion des formulaires d'ajout de patrimoine culturel
+document.getElementById('addCuisineForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const zoneId = document.getElementById('addCuisineForm').getAttribute('data-zone-id');
+    const recette = document.getElementById('recette').value;
+    const ingredients = document.getElementById('ingredients').value;
+    const tempsPreparation = document.getElementById('tempsPreparation').value;
+
+    const patrimoineData = {
+        type_patrimoine: 'cuisine',
+        recette: recette,
+        ingredients: ingredients,
+        temps_preparation: tempsPreparation
+    };
+
+    fetch(`/api/zones/${zoneId}/patrimoines`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify(patrimoineData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === "Patrimoine culturel ajouté.") {
+            alert('Patrimoine culturel ajouté avec succès');
+            const addCuisineModal = document.getElementById('addCuisineModal');
+            addCuisineModal.style.display = 'none';
+        } else {
+            alert('Erreur lors de l\'ajout du patrimoine culturel');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de l\'ajout du patrimoine culturel:', error);
+    });
+});
+
+document.getElementById('addHistoireForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const zoneId = document.getElementById('addHistoireForm').getAttribute('data-zone-id');
+    const evenement = document.getElementById('evenement').value;
+    const dateEvenement = document.getElementById('dateEvenement').value;
+    const personnagesCles = document.getElementById('personnagesCles').value;
+
+    const patrimoineData = {
+        type_patrimoine: 'histoire',
+        evenement: evenement,
+        date_evenement: dateEvenement,
+        personnages_cles: personnagesCles
+    };
+
+    fetch(`/api/zones/${zoneId}/patrimoines`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify(patrimoineData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === "Patrimoine culturel ajouté.") {
+            alert('Patrimoine culturel ajouté avec succès');
+            const addHistoireModal = document.getElementById('addHistoireModal');
+            addHistoireModal.style.display = 'none';
+        } else {
+            alert('Erreur lors de l\'ajout du patrimoine culturel');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de l\'ajout du patrimoine culturel:', error);
+    });
+});
+
+document.getElementById('addPersonnaliteForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const zoneId = document.getElementById('addPersonnaliteForm').getAttribute('data-zone-id');
+    const nomPersonnalite = document.getElementById('nomPersonnalite').value;
+    const biographie = document.getElementById('biographie').value;
+    const contributions = document.getElementById('contributions').value;
+
+    const patrimoineData = {
+        type_patrimoine: 'personnalité',
+        nom_personnalite: nomPersonnalite,
+        biographie: biographie,
+        contributions: contributions
+    };
+
+    fetch(`/api/zones/${zoneId}/patrimoines`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify(patrimoineData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === "Patrimoine culturel ajouté.") {
+            alert('Patrimoine culturel ajouté avec succès');
+            const addPersonnaliteModal = document.getElementById('addPersonnaliteModal');
+            addPersonnaliteModal.style.display = 'none';
+        } else {
+            alert('Erreur lors de l\'ajout du patrimoine culturel');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de l\'ajout du patrimoine culturel:', error);
+    });
+});
+
+document.getElementById('addMusiqueForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const zoneId = document.getElementById('addMusiqueForm').getAttribute('data-zone-id');
+    const titreMusique = document.getElementById('titreMusique').value;
+    const artiste = document.getElementById('artiste').value;
+    const genre = document.getElementById('genre').value;
+    const lienMusique = document.getElementById('lienMusique').value;
+
+    const patrimoineData = {
+        type_patrimoine: 'musique',
+        titre_musique: titreMusique,
+        artiste: artiste,
+        genre: genre,
+        lien_musique: lienMusique
+    };
+
+    fetch(`/api/zones/${zoneId}/patrimoines`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify(patrimoineData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === "Patrimoine culturel ajouté.") {
+            alert('Patrimoine culturel ajouté avec succès');
+            const addMusiqueModal = document.getElementById('addMusiqueModal');
+            addMusiqueModal.style.display = 'none';
+        } else {
+            alert('Erreur lors de l\'ajout du patrimoine culturel');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de l\'ajout du patrimoine culturel:', error);
+    });
+});
+
+// Gestion de l'affichage des champs spécifiques en fonction du type de patrimoine
+document.getElementById('typePatrimoine').addEventListener('change', (event) => {
+    const typePatrimoine = event.target.value;
+    document.getElementById('cuisineFields').style.display = 'none';
+    document.getElementById('histoireFields').style.display = 'none';
+    document.getElementById('personnaliteFields').style.display = 'none';
+    document.getElementById('musiqueFields').style.display = 'none';
+
+    if (typePatrimoine === "cuisine") {
+        document.getElementById('cuisineFields').style.display = 'block';
+    } else if (typePatrimoine === "histoire") {
+        document.getElementById('histoireFields').style.display = 'block';
+    } else if (typePatrimoine === "personnalité") {
+        document.getElementById('personnaliteFields').style.display = 'block';
+    } else if (typePatrimoine === "musique") {
+        document.getElementById('musiqueFields').style.display = 'block';
+    }
+});
