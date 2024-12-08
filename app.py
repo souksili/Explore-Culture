@@ -322,11 +322,10 @@ def get_user_role():
 def recuperer_zones():
     try:
         logging.info("Route /api/zones (GET) appelée")
-        utilisateur_id = get_jwt_identity()
 
-        zones = Zone.query.filter_by(utilisateur_id=utilisateur_id).all()
+        zones = Zone.query.all()
         if not zones:
-            logging.info("Aucune zone trouvée pour cet utilisateur.")
+            logging.info("Aucune zone trouvée.")
             return jsonify([]), 200
 
         zones_dict = [zone.to_dict() for zone in zones]
@@ -786,12 +785,11 @@ def supprimer_patrimoine(zone_id, patrimoine_id):
 def recuperer_toutes_donnees_par_zone(zone_id):
     try:
         logging.info(f"Route /api/zones/{zone_id}/all (GET) appelée")
-        utilisateur_id = get_jwt_identity()
 
-        zone = Zone.query.filter_by(id=zone_id, utilisateur_id=utilisateur_id).first()
+        zone = Zone.query.get(zone_id)
         if not zone:
-            logging.warning(f"Zone {zone_id} non trouvée ou n'appartient pas à l'utilisateur {utilisateur_id}")
-            return jsonify({"message": "Zone non trouvée ou non autorisée"}), 404
+            logging.warning(f"Zone {zone_id} non trouvée")
+            return jsonify({"message": "Zone non trouvée"}), 404
 
         histoires = Histoire.query.join(PatrimoineCulturel).filter(PatrimoineCulturel.zone_id == zone_id).all()
         musiques = Musique.query.join(PatrimoineCulturel).filter(PatrimoineCulturel.zone_id == zone_id).all()
@@ -811,18 +809,16 @@ def recuperer_toutes_donnees_par_zone(zone_id):
         logging.error(f"Erreur lors de la récupération des données pour la zone {zone_id} : {e}")
         return jsonify({"message": "Une erreur est survenue lors de la récupération des données"}), 500
 
-
 @app.route('/api/qcm/<int:zone_id>', methods=['GET'])
 @jwt_required()
 def recuperer_qcm(zone_id):
     try:
         logging.info(f"Route /api/qcm/{zone_id} (GET) appelée")
-        utilisateur_id = get_jwt_identity()
 
-        zone = Zone.query.filter_by(id=zone_id, utilisateur_id=utilisateur_id).first()
+        zone = Zone.query.get(zone_id)
         if not zone:
-            logging.warning(f"Zone {zone_id} non trouvée ou n'appartient pas à l'utilisateur {utilisateur_id}")
-            return jsonify({"message": "Zone non trouvée ou non autorisée"}), 404
+            logging.warning(f"Zone {zone_id} non trouvée")
+            return jsonify({"message": "Zone non trouvée"}), 404
 
         patrimoines = PatrimoineCulturel.query.filter_by(zone_id=zone_id).all()
 
